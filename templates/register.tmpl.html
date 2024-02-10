@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>CPNS</title>
+    <link href="static/stylesheets/common.css" rel="stylesheet" />
+    <link href="static/stylesheets/register.css" rel="stylesheet" />
+</head>
+<body>
+<header>
+    <hgroup>
+        <h1>Children Playground Navigation System</h1>
+    </hgroup>
+</header>
+<nav>
+    <ul>
+        <li><a href="/map">Map</a></li>
+        <li><a href="/playgrounds">Playgrounds</a></li>
+        <li><a href="/sign-in">Sign in</a></li>
+        <li><a class="active" href="/sign-up">Register</a></li>
+        <li><a href="/profile">Profile</a></li>
+    </ul>
+</nav>
+<main>
+    <div id="container">
+        <h2>Sign Up</h2>
+        <form id="registerForm" action="/api/register">
+            <input name="email" type="email" placeholder="Email address" required>
+            <input name="username" type="username" placeholder="Username" required>
+            <input name="password" type="password" placeholder="Password" required>
+            <button type="submit"> Sign Up </button>
+        </form>
+        {{if .error}}
+        <div class="error-message">{{.error}}</div>
+        {{end}}
+    </div>
+</main>
+<footer><a href="/about">About</a></footer>
+<script>
+</script>
+</body>
+</html>
