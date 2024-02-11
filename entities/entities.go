@@ -1,14 +1,21 @@
 package entities
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 type User struct {
 	gorm.Model
-	Email         string `gorm:"unique;not null"`
-	Username      string `gorm:"unique;not null"`
+	Email         string `gorm:"unique;not null;check:LENGTH(email) >= 3 AND email LIKE '%@%'"`
+	Username      string `gorm:"unique;not null;check:LENGTH(username) > 0"`
 	PasswordHash  string
 	Administrator bool `gorm:"not null;default false"`
 	Banned        bool `gorm:"not null;default false"`
+	Reviews       []PlaygroundReview
+	Photos        []PlaygroundPhoto
+	ReviewVotes   []ReviewVote
+	PhotoVotes    []PhotoVote
 }
 
 type Playground struct {
@@ -20,27 +27,53 @@ type Playground struct {
 	Area      int `gorm:"check:area >= 0"`
 	Location  string
 	Ownership string
+	Reviews   []PlaygroundReview
+	Photos    []PlaygroundPhoto
 }
 
 //TODO: add relation between playgrounds and their selected photos to be shown
 
 type PlaygroundReview struct {
 	gorm.Model
-	Playground Playground
-	User       User
-	Stars      int `gorm:"check:stars >= 0 AND stars <= 5"`
-	Content    string
-	Upvotes    int `gorm:"check:upvotes >= 0"`
-	Downvotes  int `gorm:"check:downvotes <= 0"`
+	Playground   Playground
+	User         User
+	PlaygroundID uint
+	UserId       uint
+	Stars        int `gorm:"check:stars >= 0 AND stars <= 5"`
+	Content      string
+	Votes        []ReviewVote
 }
 
 type PlaygroundPhoto struct {
 	gorm.Model
-	Playground Playground
-	User       User
-	Approved   bool
-	Selected   bool
+	Playground   Playground
+	User         User
+	PlaygroundID uint
+	UserId       uint
+	Approved     *bool
 	//NULL is not reviewed yet, TRUE is approved and FALSE is rejected
-	Upvotes   int `gorm:"check:upvotes >= 0"`
-	Downvotes int `gorm:"check:downvotes <= 0"`
+	Selected bool
+	Votes    []PhotoVote
+}
+
+type ReviewVote struct {
+	Up                 bool
+	Review             PlaygroundReview `gorm:"foreignkey:PlaygroundReviewID"`
+	User               User             `gorm:"foreignkey:UserID"`
+	PlaygroundReviewID uint             `gorm:"primaryKey;uniqueIndex:idx_review_usr_vote"`
+	UserID             uint             `gorm:"primaryKey;uniqueIndex:idx_review_usr_vote"`
+	CreatedAt          time.Time        `gorm:"<-:create"`
+	UpdatedAt          time.Time
+	gorm.DeletedAt
+}
+
+type PhotoVote struct {
+	Up                bool
+	Photo             PlaygroundPhoto `gorm:"foreignkey:PlaygroundPhotoID"`
+	User              User            `gorm:"foreignkey:UserID"`
+	PlaygroundPhotoID uint            `gorm:"primaryKey;uniqueIndex:idx_photo_usr_vote"`
+	UserID            uint            `gorm:"primaryKey;uniqueIndex:idx_photo_usr_vote"`
+	CreatedAt         time.Time       `gorm:"<-:create"`
+	UpdatedAt         time.Time
+	gorm.DeletedAt
 }

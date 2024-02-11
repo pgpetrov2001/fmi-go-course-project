@@ -4,6 +4,7 @@ import (
 	"course-project/entities"
 	"course-project/utils"
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -11,30 +12,144 @@ type CPNS struct {
 	Db *gorm.DB
 }
 
-func (cpns *CPNS) CreateUser(email string, username string, pass string) error {
+func (cpns *CPNS) CreateUser(email string, username string, pass string, administrator bool, banned bool) (*entities.User, error) {
 	hash, err := utils.HashPassword(pass)
 	if err != nil {
 		panic(err)
 	}
-	err = cpns.Db.Create(&entities.User{
-		Email:        email,
-		Username:     username,
-		PasswordHash: hash,
-	}).Error
-	return err
+	user := entities.User{
+		Email:         email,
+		Username:      username,
+		PasswordHash:  hash,
+		Administrator: administrator,
+		Banned:        banned,
+	}
+	err = cpns.Db.Create(&user).Error
+	return &user, err
 }
 
-func (cpns *CPNS) Authenticate(email string, pass string) (bool, error) {
+func (cpns *CPNS) UpdateUser(user *entities.User) error {
+	result := cpns.Db.Save(user)
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("Could not find user with id %d, did not update anything", user.ID)
+	}
+	return result.Error
+}
+
+func (cpns *CPNS) DeleteUser(user *entities.User) error {
+	result := cpns.Db.Delete(user)
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("No user with id %d, did not delete anything", user.ID)
+	}
+	return result.Error
+}
+
+func (cpns *CPNS) Authenticate(email string, pass string) (*entities.User, error) {
 	var user entities.User
 	err := cpns.Db.First(&user, "email = ?", email).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return false, nil
+		return nil, nil
+	} else if err != nil {
+		return nil, err
 	}
-	return utils.CheckPasswordHash(pass, user.PasswordHash), nil
+	if !utils.CheckPasswordHash(pass, user.PasswordHash) {
+		return nil, nil
+	}
+	return &user, nil
 }
 
 func (cpns *CPNS) GetUsers() ([]entities.User, error) {
 	var users []entities.User
 	err := cpns.Db.Find(&users).Error
 	return users, err
+}
+
+func (cpns *CPNS) GetUser(userId uint) (entities.User, error) {
+	var user entities.User
+	err := cpns.Db.First(&user, userId).Error
+	return user, err
+}
+
+func (cpns *CPNS) GetPlayground(playgroundId uint) (entities.Playground, error) {
+	var playground entities.Playground
+	err := cpns.Db.Preload("Photos").Preload("Reviews").First(&playground, playgroundId).Error
+	return playground, err
+}
+
+func (cpns *CPNS) GetPlaygrounds() ([]entities.Playground, error) {
+	var playgrounds []entities.Playground
+	err := cpns.Db.Preload("Photos").Preload("Reviews").Find(&playgrounds).Error
+	return playgrounds, err
+}
+
+func (cpns *CPNS) CreatePlayground(playground *entities.Playground) error {
+	result := cpns.Db.Create(playground)
+	err := result.Error
+	if err == nil && result.RowsAffected == 0 {
+		return fmt.Errorf("Could not create playground entry in database for some reason")
+	}
+	return err
+}
+
+func (cpns *CPNS) UpdatePlayground(playground *entities.Playground) error {
+	result := cpns.Db.Save(playground)
+	err := result.Error
+	if err == nil && result.RowsAffected == 0 {
+		return fmt.Errorf("Could not find playground with id %d, did not update anything", playground.ID)
+	}
+	return result.Error
+}
+
+func (cpns *CPNS) DeletePlayground(playground *entities.Playground) error {
+	result := cpns.Db.Delete(playground)
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("No playground with id %d, did not delete anything", playground.ID)
+	}
+	return result.Error
+}
+
+func (cpns *CPNS) ReviewPlayground(review *entities.PlaygroundReview) error {
+	alreadyRated := false
+	for _, currentReview := range review.Playground.Reviews {
+		if currentReview.UserId == review.UserId {
+			alreadyRated = true
+			break
+		}
+	}
+	if alreadyRated {
+		return fmt.Errorf("User %s has already submitted a review for playground with id %u", review.User.Username, review.PlaygroundID)
+	}
+	result := cpns.Db.Create(review)
+	err := result.Error
+	if err != nil && result.RowsAffected == 0 {
+		return fmt.Errorf("Somehow the review couldn't be created")
+	}
+	return err
+}
+
+func (cpns *CPNS) PlaygroundGallery(playgroundId uint) ([]entities.PlaygroundPhoto, error) {
+	var photos []entities.PlaygroundPhoto
+	err := cpns.Db.Where("playground_id = ?", playgroundId).Find(&photos).Error
+	return photos, err
+}
+
+func (cpns *CPNS) PendingPhotos() ([]entities.PlaygroundPhoto, error) {
+	var photos []entities.PlaygroundPhoto
+	err := cpns.Db.Where("approved IS NULL").Find(&photos).Error
+	return photos, err
+}
+
+func (cpns *CPNS) GetPhoto(photoId uint) (entities.PlaygroundPhoto, error) {
+	var photo entities.PlaygroundPhoto
+	err := cpns.Db.First(&photo, photoId).Error
+	return photo, err
+}
+
+func (cpns *CPNS) UpdatePhoto(photo *entities.PlaygroundPhoto) error {
+	result := cpns.Db.Save(photo)
+	err := result.Error
+	if err == nil && result.RowsAffected == 0 {
+		return fmt.Errorf("Could not find photo with id %d, did not update anything", photo.ID)
+	}
+	return result.Error
 }

@@ -19,12 +19,13 @@
         <li><a href="/sign-in">Sign in</a></li>
         <li><a class="active" href="/sign-up">Register</a></li>
         <li><a href="/profile">Profile</a></li>
+        <li><form action="/api/logout" method="post"><button type="submit" style=""><a>Sign out</a></button></form></li>
     </ul>
 </nav>
 <main>
     <div id="container">
         <h2>Sign Up</h2>
-        <form id="registerForm" action="/api/register">
+        <form id="registerForm" action="/api/register" method="post">
             <input name="email" type="email" placeholder="Email address" required>
             <input name="username" type="username" placeholder="Username" required>
             <input name="password" type="password" placeholder="Password" required>

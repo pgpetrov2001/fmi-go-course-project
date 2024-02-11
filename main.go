@@ -5,7 +5,9 @@ import (
 	"course-project/dao"
 	"course-project/entities"
 	"course-project/routes"
+	"course-project/utils"
 	"fmt"
+	"github.com/gorilla/mux"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"html/template"
@@ -22,13 +24,30 @@ func CPNSRun(w *app.WebApp) error {
 	loginTemplate := template.Must(template.ParseFiles("./templates/login.tmpl.html"))
 	registerTemplate := template.Must(template.ParseFiles("./templates/register.tmpl.html"))
 
-	w.Mux.Handle("/", http.RedirectHandler("/map", http.StatusPermanentRedirect))
-	w.Mux.HandleFunc("/map", routes.RenderTemplate(mapTemplate))
-	w.Mux.HandleFunc("/api/login", w.WebappWrapper(routes.Login))
-	w.Mux.HandleFunc("/api/register", w.WebappWrapper(routes.Register))
-	w.Mux.HandleFunc("/api/logout", w.WebappWrapper(routes.Logout))
-	w.Mux.Handle("/sign-in", routes.SignInDataMiddleware(routes.RenderTemplate(loginTemplate)))
-	w.Mux.Handle("/sign-up", routes.SignUpDataMiddleware(routes.RenderTemplate(registerTemplate)))
+	r := mux.NewRouter()
+
+	r.Handle("/", http.RedirectHandler("/map", http.StatusPermanentRedirect))
+	r.HandleFunc("/map", routes.RenderTemplate(mapTemplate)).Methods("GET")
+	r.Handle("/sign-in", routes.SignInDataMiddleware(routes.RenderTemplate(loginTemplate))).Methods("GET")
+	r.Handle("/sign-up", routes.SignUpDataMiddleware(routes.RenderTemplate(registerTemplate))).Methods("GET")
+	r.Handle("/api/login", w.WebappWrapper(routes.Login)).Methods("POST")
+	r.Handle("/api/register", w.WebappWrapper(routes.Register)).Methods("POST")
+	r.Handle("/api/logout", w.WebappWrapper(routes.Logout)).Methods("POST")
+	r.Handle("/api/users", utils.AccessRightsMiddleware(w.Dao, true, w.WebappWrapper(routes.GetUsers))).Methods("GET")
+	r.Handle("/api/users/{userId}", utils.UserAccessRightsMiddleware(w.WebappWrapper(routes.GetUser))).Methods("GET")
+	r.Handle("/api/users/{userId}", utils.UserAccessRightsMiddleware(w.WebappWrapper(routes.PatchUser))).Methods("PATCH")
+	r.Handle("/api/users/{userId}", utils.UserAccessRightsMiddleware(w.WebappWrapper(routes.DeleteUser))).Methods("DELETE")
+	r.Handle("/api/users", utils.AccessRightsMiddleware(w.Dao, true, w.WebappWrapper(routes.PostUser))).Methods("POST")
+	r.Handle("/api/playground/{playgroundId}", utils.AccessRightsMiddleware(w.Dao, true, routes.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.GetPlayground)))).Methods("GET")
+	r.Handle("/api/playground/{playgroundId}", utils.AccessRightsMiddleware(w.Dao, true, routes.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.PatchPlayground)))).Methods("PATCH")
+	r.Handle("/api/playground/{playgroundId}", utils.AccessRightsMiddleware(w.Dao, true, routes.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.DeletePlayground)))).Methods("DELETE")
+	r.Handle("/api/playground/{playgroundId}", utils.AccessRightsMiddleware(w.Dao, true, routes.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.PostPlayground)))).Methods("POST")
+	r.Handle("/api/playground/{playgroundId}/review", utils.AccessRightsMiddleware(w.Dao, false, routes.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.ReviewPlayground)))).Methods("POST")
+	r.Handle("/api/playground/{playgroundId}/gallery", w.WebappWrapper(routes.PlaygroundGallery)).Methods("GET")
+	r.Handle("/api/pending_photos", utils.AccessRightsMiddleware(w.Dao, true, w.WebappWrapper(routes.PendingPhotos))).Methods("GET")
+	r.Handle("/api/approve/{photoId}", utils.AccessRightsMiddleware(w.Dao, true, w.WebappWrapper(routes.ApprovePhoto))).Methods("POST")
+
+	w.Mux.Handle("/", r)
 
 	fileServer := http.FileServer(http.Dir(path.Join(workDir, "static")))
 	w.Mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
@@ -41,10 +60,10 @@ func CPNSRun(w *app.WebApp) error {
 }
 
 func main() {
-	mux := http.NewServeMux()
+	multiplexer := http.NewServeMux()
 	server := &http.Server{
 		Addr:    ":8080",
-		Handler: mux,
+		Handler: multiplexer,
 	}
 
 	dsn := "root:root@tcp(127.0.0.1:3306)/CPNS?charset=utf8mb4&parseTime=True&loc=Local"
@@ -54,14 +73,14 @@ func main() {
 		log.Fatalf("Error while initializing database: %v", err)
 	}
 
-	db.AutoMigrate(&entities.User{})
-	db.AutoMigrate(&entities.Playground{})
-	db.AutoMigrate(&entities.PlaygroundPhoto{})
-	db.AutoMigrate(&entities.PlaygroundReview{})
+	err = db.AutoMigrate(&entities.User{}, &entities.Playground{}, &entities.PlaygroundPhoto{}, &entities.PlaygroundReview{})
+	if err != nil {
+		log.Fatalf("Auto-Migration error: %v", err)
+	}
 
 	playgroundsApp := app.WebApp{
 		Server: server,
-		Mux:    mux,
+		Mux:    multiplexer,
 		Dao:    &dao.CPNS{Db: db},
 	}
 

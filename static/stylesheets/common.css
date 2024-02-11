@@ -32,6 +32,20 @@ nav {
         float: left;
     }
 
+    li button {
+        border: none;
+        margin: 0;
+        padding: 0;
+        width: auto;
+        overflow: visible;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+        outline: none;
+    }
+
     li a {
         display: block;
         color: white;

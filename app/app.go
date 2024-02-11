@@ -6,12 +6,21 @@ import (
 )
 
 type DAO interface {
-	CreateUser(email string, username string, pass string) error
-	Authenticate(email string, pass string) (bool, error)
+	CreateUser(email string, username string, pass string, administrator bool, banned bool) (*entities.User, error)
+	Authenticate(email string, pass string) (*entities.User, error)
 	GetUsers() ([]entities.User, error)
-	GetUser(id int) (entities.User, error)
-	GetPlayground(id int) (entities.Playground, error)
-	GetPlaygrounds() ([]entities.PlaygroundReview, error)
+	GetUser(userId uint) (entities.User, error)
+	UpdateUser(user *entities.User) error
+	DeleteUser(user *entities.User) error
+	CreatePlayground(playground *entities.Playground) error
+	GetPlayground(playgroundId uint) (entities.Playground, error)
+	UpdatePlayground(playground *entities.Playground) error
+	DeletePlayground(playground *entities.Playground) error
+	ReviewPlayground(review *entities.PlaygroundReview) error
+	PlaygroundGallery(playgroundId uint) ([]entities.PlaygroundPhoto, error)
+	PendingPhotos() ([]entities.PlaygroundPhoto, error)
+	GetPhoto(photoId uint) (entities.PlaygroundPhoto, error)
+	UpdatePhoto(photo *entities.PlaygroundPhoto) error
 }
 
 type WebApp struct {
@@ -21,12 +30,9 @@ type WebApp struct {
 }
 
 type WebappHandler func(*WebApp, http.ResponseWriter, *http.Request)
-type Handler func(http.ResponseWriter, *http.Request)
 
-type WebappMiddleware func(*WebApp, http.ResponseWriter, *http.Request)
-
-func (a *WebApp) WebappWrapper(f WebappHandler) Handler {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (a *WebApp) WebappWrapper(f WebappHandler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f(a, w, r)
-	}
+	})
 }
