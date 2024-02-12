@@ -143,7 +143,7 @@ func ReviewPlayground(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 	review := entities.PlaygroundReview{
 		PlaygroundID: playground.ID,
 		Playground:   playground,
-		UserId:       user.ID,
+		UserID:       user.ID,
 		User:         user,
 		Stars:        stars,
 		Content:      r.Form.Get("content"),

@@ -23,6 +23,7 @@ type DAO interface {
 	PendingPhotos() ([]entities.PlaygroundPhoto, error)
 	UploadPhoto(photo *entities.PlaygroundPhoto, filename string, data []byte) error
 	GetPhoto(photoId uint) (entities.PlaygroundPhoto, error)
+	GetPhotoContents(photo *entities.PlaygroundPhoto) ([]byte, error)
 	UpdatePhoto(photo *entities.PlaygroundPhoto) error
 	GetReview(reviewId uint) (entities.PlaygroundReview, error)
 	UpdateReview(review *entities.PlaygroundReview) error

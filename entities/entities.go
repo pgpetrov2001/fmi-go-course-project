@@ -37,9 +37,9 @@ type PlaygroundReview struct {
 	gorm.Model
 	Playground   Playground
 	User         User
-	PlaygroundID uint
-	UserId       uint
-	Stars        int `gorm:"check:stars >= 0 AND stars <= 5"`
+	PlaygroundID uint `gorm:"not null"`
+	UserID       uint `gorm:"not null"`
+	Stars        int  `gorm:"check:stars >= 0 AND stars <= 5"`
 	Content      string
 	Votes        []ReviewVote
 }
@@ -48,8 +48,9 @@ type PlaygroundPhoto struct {
 	gorm.Model
 	Playground   Playground
 	User         User
-	PlaygroundID uint
-	UserId       uint
+	PlaygroundID uint   `gorm:"not null"`
+	UserId       uint   `gorm:"not null"`
+	Extension    string `gorm:"not null"`
 	Approved     *bool
 	//NULL is not reviewed yet, TRUE is approved and FALSE is rejected
 	Selected bool `gorm:"not null;default false"`

@@ -36,5 +36,27 @@ func ApprovePhoto(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPhoto(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
-
+	photo, _ := r.Context().Value("photo").(entities.PlaygroundPhoto)
+	user, _ := r.Context().Value("user").(entities.User)
+	allow := false
+	if user.Administrator {
+		allow = true
+	}
+	if photo.UserId == user.ID {
+		allow = true
+	}
+	if photo.Approved != nil && *photo.Approved {
+		allow = true
+	}
+	if !allow {
+		http.Error(w, "Not allowed to view photo", http.StatusForbidden)
+		return
+	}
+	data, err := a.Dao.GetPhotoContents(&photo)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Could not retrieve photo with id %u"), http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(200)
+	w.Write(data)
 }

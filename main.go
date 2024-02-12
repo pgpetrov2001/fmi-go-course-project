@@ -48,10 +48,10 @@ func CPNSRun(w *app.WebApp) error {
 	r.Handle("/api/playground/{playgroundId}/gallery", utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.PlaygroundGallery))).Methods("GET")
 	r.Handle("/api/playground/{playgroundId}/upload", utils.AccessRightsMiddleware(w.Dao, false, utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.UploadPlaygroundPhoto)))).Methods("POST")
 	r.Handle("/api/pending_photos", utils.AccessRightsMiddleware(w.Dao, true, w.WebappWrapper(routes.PendingPhotos))).Methods("GET")
-	r.Handle("/api/approve/{photoId}", utils.AccessRightsMiddleware(w.Dao, true, w.WebappWrapper(routes.ApprovePhoto))).Methods("POST")
+	r.Handle("/api/approve/{photoId}", utils.AccessRightsMiddleware(w.Dao, true, utils.GetPhotoMiddleware(w.Dao, w.WebappWrapper(routes.ApprovePhoto)))).Methods("POST")
 	r.Handle("/api/review/{reviewId}/vote", utils.AccessRightsMiddleware(w.Dao, false, utils.GetReviewMiddleware(w.Dao, w.WebappWrapper(routes.VoteReview)))).Methods("POST")
 	r.Handle("/api/photo/{photoId}/vote", utils.AccessRightsMiddleware(w.Dao, false, utils.GetPhotoMiddleware(w.Dao, w.WebappWrapper(routes.VotePhoto)))).Methods("POST")
-	r.Handle("/img/{photoId}", utils.GetPhotoMiddleware(w.Dao, w.WebappWrapper(routes.GetPhoto))).Methods("GET")
+	r.Handle("/img/{photoId}", utils.GetUserMiddleware(utils.GetPhotoMiddleware(w.Dao, w.WebappWrapper(routes.GetPhoto)))).Methods("GET")
 
 	w.Mux.Handle("/", r)
 

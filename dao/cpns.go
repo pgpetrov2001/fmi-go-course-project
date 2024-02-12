@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -122,7 +123,7 @@ func (cpns *CPNS) DeletePlayground(playground *entities.Playground) error {
 func (cpns *CPNS) ReviewPlayground(review *entities.PlaygroundReview) error {
 	alreadyRated := false
 	for _, currentReview := range review.Playground.Reviews {
-		if currentReview.UserId == review.UserId {
+		if currentReview.UserID == review.UserID {
 			alreadyRated = true
 			break
 		}
@@ -151,6 +152,7 @@ func (cpns *CPNS) PendingPhotos() ([]entities.PlaygroundPhoto, error) {
 }
 
 func (cpns *CPNS) UploadPhoto(photo *entities.PlaygroundPhoto, filename string, data []byte) error {
+	photo.Extension = filepath.Ext(filename)
 	result := cpns.Db.Create(photo)
 	err := result.Error
 	if err == nil && result.RowsAffected == 0 {
@@ -159,7 +161,7 @@ func (cpns *CPNS) UploadPhoto(photo *entities.PlaygroundPhoto, filename string, 
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(cpns.FSStoragePath, "photos", fmt.Sprintf("%u.%s", photo.ID, filepath.Ext(filename)))
+	path := filepath.Join(cpns.FSStoragePath, "photos", fmt.Sprintf("%u.%s", photo.ID, photo.Extension))
 	err = os.WriteFile(path, data, 0644)
 	return err
 }
@@ -183,6 +185,11 @@ func (cpns *CPNS) GetPhoto(photoId uint) (entities.PlaygroundPhoto, error) {
 	var photo entities.PlaygroundPhoto
 	err := cpns.Db.First(&photo, photoId).Error
 	return photo, err
+}
+
+func (cpns *CPNS) GetPhotoContents(photo *entities.PlaygroundPhoto) ([]byte, error) {
+	fillePath := path.Join(cpns.FSStoragePath, "photos", fmt.Sprintf("%u.%s", photo.ID, photo.Extension))
+	return os.ReadFile(fillePath)
 }
 
 func (cpns *CPNS) UpdatePhoto(photo *entities.PlaygroundPhoto) error {
