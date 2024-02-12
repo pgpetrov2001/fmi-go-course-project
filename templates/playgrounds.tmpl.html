@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>CPNS</title>
+    <link href="static/stylesheets/common.css" rel="stylesheet" />
+    <link href="static/stylesheets/playgrounds.css" rel="stylesheet" />
+</head>
+<body>
+<header>
+    <hgroup>
+        <h1>Children Playground Navigation System</h1>
+    </hgroup>
+</header>
+<nav>
+    <ul>
+        <li><a href="/map">Map</a></li>
+        <li><a class="active" href="/playgrounds">Playgrounds</a></li>
+        <li><a href="/sign-in">Sign in</a></li>
+        <li><a href="/sign-up">Register</a></li>
+        <li><a href="/profile">Profile</a></li>
+        <li><form action="/api/logout" method="post"><button type="submit" style=""><a>Sign out</a></button></form></li>
+    </ul>
+</nav>
+<main>
+    <button>Add new Playground</button>
+    {{range .playgrounds}}
+    <div class="playground" data-id="{{.ID}}">
+        <h3>{{.SiteNumber}} at {{.Location}}</h3>
+        {{range .Photos}}
+        {{if and .Approved .Selected}}<img src="/img/{{.ID}}">{{end}}
+        {{end}}
+    </div>
+    {{end}}
+</main>
+<footer><a href="/about">About</a></footer>
+<script></script>
+</body>
+</html>

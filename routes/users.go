@@ -19,7 +19,7 @@ func GetUsers(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := json.Marshal(users)
 	if err != nil {
-		http.Error(w, "A programming error has been introduced, please contact support.", http.StatusInternalServerError)
+		http.Error(w, "Could not serialize users, please contact support.", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(200)
@@ -92,7 +92,7 @@ func PatchUser(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData, err := json.Marshal(user)
+	userData, _ := json.Marshal(user)
 	w.WriteHeader(200)
 	w.Write(userData)
 }
@@ -113,7 +113,7 @@ func DeleteUser(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(200)
-	w.Write([]byte("Successfully deleted user."))
+	w.Write([]byte{})
 }
 
 func PostUser(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
@@ -129,7 +129,7 @@ func PostUser(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData, err := json.Marshal(user)
+	userData, _ := json.Marshal(user)
 	w.WriteHeader(200)
 	w.Write(userData)
 }
@@ -160,12 +160,7 @@ func Login(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData, err := json.Marshal(user)
-	if err != nil {
-		http.Error(w, "Database isn't functioning properly at the moment.", http.StatusInternalServerError)
-		return
-	}
-	session.Values["user"] = string(userData)
+	session.Values["user"] = user
 	session.Save(r, w)
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -178,7 +173,7 @@ func Logout(_ *app.WebApp, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Values["user"] = ""
+	session.Values["user"] = nil
 	session.Save(r, w)
 
 	http.Redirect(w, r, "/sign-in", http.StatusSeeOther)
@@ -208,13 +203,10 @@ func Register(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 func SignInDataMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		errVal := r.URL.Query().Get("error")
-		data, err := json.Marshal(map[string]interface{}{
+		data := map[string]interface{}{
 			"error": errVal,
-		})
-		if err != nil {
-			log.Fatal(err)
 		}
-		req := r.WithContext(context.WithValue(r.Context(), "data", string(data)))
+		req := r.WithContext(context.WithValue(r.Context(), "data", data))
 		next.ServeHTTP(w, req)
 	})
 }
@@ -222,13 +214,10 @@ func SignInDataMiddleware(next http.Handler) http.Handler {
 func SignUpDataMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		errVal := r.URL.Query().Get("error")
-		data, err := json.Marshal(map[string]interface{}{
+		data := map[string]interface{}{
 			"error": errVal,
-		})
-		if err != nil {
-			log.Fatal(err)
 		}
-		req := r.WithContext(context.WithValue(r.Context(), "data", string(data)))
+		req := r.WithContext(context.WithValue(r.Context(), "data", data))
 		next.ServeHTTP(w, req)
 	})
 }

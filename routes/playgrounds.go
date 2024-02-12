@@ -21,16 +21,12 @@ func GetPlaygroundMiddleware(d app.DAO, next http.Handler) http.Handler {
 		}
 
 		playground, err := d.GetPlayground(playgroundId)
-		var playgroundData []byte
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Could not get playground with id %u", playgroundId), http.StatusBadRequest)
 			return
-		} else if playgroundData, err = json.Marshal(playground); err != nil {
-			http.Error(w, "Error while serializing playground", http.StatusInternalServerError)
-			return
 		}
 
-		req := r.WithContext(context.WithValue(r.Context(), "playground", string(playgroundData)))
+		req := r.WithContext(context.WithValue(r.Context(), "playground", playground))
 		next.ServeHTTP(w, req)
 	})
 }
@@ -43,17 +39,13 @@ func GetReviewMiddleware(d app.DAO, next http.Handler) http.Handler {
 			return
 		}
 
-		review, err := d.GetPlayground(reviewId)
-		var reviewData []byte
+		review, err := d.GetReview(reviewId)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Could not get review with id %u", reviewId), http.StatusBadRequest)
 			return
-		} else if reviewData, err = json.Marshal(review); err != nil {
-			http.Error(w, "Error while serializing review", http.StatusInternalServerError)
-			return
 		}
 
-		req := r.WithContext(context.WithValue(r.Context(), "review", string(reviewData)))
+		req := r.WithContext(context.WithValue(r.Context(), "review", review))
 		next.ServeHTTP(w, req)
 	})
 }
@@ -66,25 +58,41 @@ func GetPhotoMiddleware(d app.DAO, next http.Handler) http.Handler {
 			return
 		}
 
-		photo, err := d.GetPlayground(photoId)
-		var photoData []byte
+		photo, err := d.GetPhoto(photoId)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Could not get photo with id %u", photoId), http.StatusBadRequest)
 			return
-		} else if photoData, err = json.Marshal(photo); err != nil {
-			http.Error(w, "Error while serializing photo", http.StatusInternalServerError)
-			return
 		}
 
-		req := r.WithContext(context.WithValue(r.Context(), "photo", string(photoData)))
+		req := r.WithContext(context.WithValue(r.Context(), "photo", photo))
+		next.ServeHTTP(w, req)
+	})
+}
+
+func PlaygroundsDataMiddleware(d app.DAO, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		playgrounds, err := d.GetPlaygrounds()
+		if err != nil {
+			http.Error(w, "Could not fetch playgrounds for some reason", http.StatusInternalServerError)
+			return
+		}
+		templateData := map[string]interface{}{
+			"playgrounds": playgrounds,
+		}
+		req := r.WithContext(context.WithValue(r.Context(), "data", templateData))
 		next.ServeHTTP(w, req)
 	})
 }
 
 func GetPlayground(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
-	playgroundData := r.Context().Value("playground").(string)
+	playground := r.Context().Value("playground").(entities.Playground)
+	playgroundData, err := json.Marshal(playground)
+	if err != nil {
+		http.Error(w, "Could not serialize playground", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(200)
-	w.Write([]byte(playgroundData))
+	w.Write(playgroundData)
 }
 
 func parsePlaygroundForm(r *http.Request, playground *entities.Playground) error {
@@ -133,7 +141,7 @@ func parsePlaygroundForm(r *http.Request, playground *entities.Playground) error
 }
 
 func PatchPlayground(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
-	playground, _ := utils.ExtractPlayground(r)
+	playground, _ := r.Context().Value("playground").(entities.Playground)
 	err := parsePlaygroundForm(r, &playground)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -151,7 +159,7 @@ func PatchPlayground(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 }
 
 func DeletePlayground(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
-	playground, _ := utils.ExtractPlayground(r)
+	playground, _ := r.Context().Value("playground").(entities.Playground)
 	err := a.Dao.DeletePlayground(&playground)
 	if err != nil {
 		http.Error(w, "Could not delete playground", http.StatusInternalServerError)
@@ -182,8 +190,8 @@ func PostPlayground(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 }
 
 func ReviewPlayground(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
-	user, _ := utils.ExtractUser(r)
-	playground, _ := utils.ExtractPlayground(r)
+	user, _ := r.Context().Value("user").(entities.User)
+	playground, _ := r.Context().Value("playground").(entities.Playground)
 	starsVal := r.Form.Get("stars")
 	stars, err := strconv.Atoi(starsVal)
 	if err != nil {
@@ -226,8 +234,8 @@ func PlaygroundGallery(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 }
 
 func VoteReview(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
-	user, _ := utils.ExtractUser(r)
-	review, _ := utils.ExtractReview(r)
+	user, _ := r.Context().Value("user").(entities.User)
+	review, _ := r.Context().Value("review").(entities.PlaygroundReview)
 	up := r.Form.Get("up") == "true"
 	vote := entities.ReviewVote{
 		Up:                 up,
@@ -246,8 +254,8 @@ func VoteReview(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 }
 
 func VotePhoto(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
-	user, _ := utils.ExtractUser(r)
-	photo, _ := utils.ExtractPhoto(r)
+	user, _ := r.Context().Value("user").(entities.User)
+	photo, _ := r.Context().Value("photo").(entities.PlaygroundPhoto)
 	up := r.Form.Get("up") == "true"
 	vote := entities.PhotoVote{
 		Up:                up,
@@ -266,8 +274,8 @@ func VotePhoto(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 }
 
 func UploadPlaygroundPhoto(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
-	user, _ := utils.ExtractUser(r)
-	playground, _ := utils.ExtractPlayground(r)
+	user, _ := r.Context().Value("user").(entities.User)
+	playground, _ := r.Context().Value("playground").(entities.Playground)
 
 	err := r.ParseMultipartForm(10 * 1024 * 1024) // 10 MB max memory
 	if err != nil {

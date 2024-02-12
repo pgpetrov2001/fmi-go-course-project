@@ -23,11 +23,13 @@ func CPNSRun(w *app.WebApp) error {
 	mapTemplate := template.Must(template.ParseFiles("./templates/index.tmpl.html"))
 	loginTemplate := template.Must(template.ParseFiles("./templates/login.tmpl.html"))
 	registerTemplate := template.Must(template.ParseFiles("./templates/register.tmpl.html"))
+	playgroundsTemplate := template.Must(template.ParseFiles("./templates/playgrounds.tmpl.html"))
 
 	r := mux.NewRouter()
 
 	r.Handle("/", http.RedirectHandler("/map", http.StatusPermanentRedirect))
 	r.HandleFunc("/map", routes.RenderTemplate(mapTemplate)).Methods("GET")
+	r.Handle("/playgrounds", routes.PlaygroundsDataMiddleware(w.Dao, routes.RenderTemplate(playgroundsTemplate))).Methods("GET")
 	r.Handle("/sign-in", routes.SignInDataMiddleware(routes.RenderTemplate(loginTemplate))).Methods("GET")
 	r.Handle("/sign-up", routes.SignUpDataMiddleware(routes.RenderTemplate(registerTemplate))).Methods("GET")
 	r.Handle("/api/login", w.WebappWrapper(routes.Login)).Methods("POST")

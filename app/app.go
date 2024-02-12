@@ -15,6 +15,7 @@ type DAO interface {
 	DeleteUser(user *entities.User) error
 	CreatePlayground(playground *entities.Playground) error
 	GetPlayground(playgroundId uint) (entities.Playground, error)
+	GetPlaygrounds() ([]entities.Playground, error)
 	UpdatePlayground(playground *entities.Playground) error
 	DeletePlayground(playground *entities.Playground) error
 	ReviewPlayground(review *entities.PlaygroundReview) error
