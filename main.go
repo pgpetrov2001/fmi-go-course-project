@@ -26,6 +26,7 @@ func CPNSRun(w *app.WebApp) error {
 	playgroundsTemplate := template.Must(template.ParseFiles("./templates/playgrounds.tmpl.html"))
 
 	r := mux.NewRouter()
+	r.Use(utils.LoggingMiddleware)
 
 	r.Handle("/", http.RedirectHandler("/map", http.StatusPermanentRedirect))
 	r.HandleFunc("/map", routes.RenderTemplate(mapTemplate)).Methods("GET")
@@ -93,6 +94,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	//the following lines ingest the playground data from the geojson into the database:
+	//err = IngestPlaygrounds(playgroundsApp.Dao, filepath.Join(workDir, "static", "detski_ploshtadki_old_new_26_sofpr_20190418.geojson"))
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 
 	err = CPNSRun(&playgroundsApp)
 	if err != nil {
