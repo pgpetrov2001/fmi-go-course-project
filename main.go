@@ -43,9 +43,12 @@ func CPNSRun(w *app.WebApp) error {
 	r.Handle("/api/playground/{playgroundId}", utils.AccessRightsMiddleware(w.Dao, true, routes.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.DeletePlayground)))).Methods("DELETE")
 	r.Handle("/api/playground/{playgroundId}", utils.AccessRightsMiddleware(w.Dao, true, routes.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.PostPlayground)))).Methods("POST")
 	r.Handle("/api/playground/{playgroundId}/review", utils.AccessRightsMiddleware(w.Dao, false, routes.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.ReviewPlayground)))).Methods("POST")
-	r.Handle("/api/playground/{playgroundId}/gallery", w.WebappWrapper(routes.PlaygroundGallery)).Methods("GET")
+	r.Handle("/api/playground/{playgroundId}/gallery", routes.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.PlaygroundGallery))).Methods("GET")
+	r.Handle("/api/playground/{playgroundId}/upload", utils.AccessRightsMiddleware(w.Dao, false, routes.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.UploadPlaygroundPhoto)))).Methods("POST")
 	r.Handle("/api/pending_photos", utils.AccessRightsMiddleware(w.Dao, true, w.WebappWrapper(routes.PendingPhotos))).Methods("GET")
 	r.Handle("/api/approve/{photoId}", utils.AccessRightsMiddleware(w.Dao, true, w.WebappWrapper(routes.ApprovePhoto))).Methods("POST")
+	r.Handle("/api/review/{reviewId}/vote", utils.AccessRightsMiddleware(w.Dao, false, routes.GetReviewMiddleware(w.Dao, w.WebappWrapper(routes.VoteReview)))).Methods("POST")
+	r.Handle("/api/photo/{photoId}/vote", utils.AccessRightsMiddleware(w.Dao, false, routes.GetPhotoMiddleware(w.Dao, w.WebappWrapper(routes.VotePhoto)))).Methods("POST")
 
 	w.Mux.Handle("/", r)
 
@@ -81,7 +84,11 @@ func main() {
 	playgroundsApp := app.WebApp{
 		Server: server,
 		Mux:    multiplexer,
-		Dao:    &dao.CPNS{Db: db},
+		Dao:    &dao.CPNS{Db: db, FSStoragePath: path.Join(workDir, "data")},
+	}
+	err = playgroundsApp.Dao.Init()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	err = CPNSRun(&playgroundsApp)

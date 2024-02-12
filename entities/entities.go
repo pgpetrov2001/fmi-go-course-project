@@ -52,7 +52,7 @@ type PlaygroundPhoto struct {
 	UserId       uint
 	Approved     *bool
 	//NULL is not reviewed yet, TRUE is approved and FALSE is rejected
-	Selected bool
+	Selected bool `gorm:"not null;default false"`
 	Votes    []PhotoVote
 }
 

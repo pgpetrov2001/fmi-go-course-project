@@ -6,10 +6,21 @@ import (
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
+	"os"
+	"path/filepath"
 )
 
 type CPNS struct {
-	Db *gorm.DB
+	Db            *gorm.DB
+	FSStoragePath string
+}
+
+func (cpns *CPNS) Init() error {
+	err := os.MkdirAll(cpns.FSStoragePath, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("Could not intialize CPNS: %v", err)
+	}
+	return nil
 }
 
 func (cpns *CPNS) CreateUser(email string, username string, pass string, administrator bool, banned bool) (*entities.User, error) {
@@ -139,6 +150,35 @@ func (cpns *CPNS) PendingPhotos() ([]entities.PlaygroundPhoto, error) {
 	return photos, err
 }
 
+func (cpns *CPNS) UploadPhoto(photo *entities.PlaygroundPhoto, filename string, data []byte) error {
+	result := cpns.Db.Create(photo)
+	err := result.Error
+	if err == nil && result.RowsAffected == 0 {
+		return fmt.Errorf("For some reason the database could not create the specified photo")
+	}
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(cpns.FSStoragePath, "photos", fmt.Sprintf("%u.%s", photo.ID, filepath.Ext(filename)))
+	err = os.WriteFile(path, data, 0644)
+	return err
+}
+
+func (cpns *CPNS) GetReview(reviewId uint) (entities.PlaygroundReview, error) {
+	var review entities.PlaygroundReview
+	err := cpns.Db.First(&review, reviewId).Error
+	return review, err
+}
+
+func (cpns *CPNS) UpdateReview(review *entities.PlaygroundReview) error {
+	result := cpns.Db.Save(review)
+	err := result.Error
+	if err == nil && result.RowsAffected == 0 {
+		return fmt.Errorf("Could not find review with id %d, did not update anything", review.ID)
+	}
+	return result.Error
+}
+
 func (cpns *CPNS) GetPhoto(photoId uint) (entities.PlaygroundPhoto, error) {
 	var photo entities.PlaygroundPhoto
 	err := cpns.Db.First(&photo, photoId).Error
@@ -152,4 +192,22 @@ func (cpns *CPNS) UpdatePhoto(photo *entities.PlaygroundPhoto) error {
 		return fmt.Errorf("Could not find photo with id %d, did not update anything", photo.ID)
 	}
 	return result.Error
+}
+
+func (cpns *CPNS) VoteReview(review *entities.ReviewVote) error {
+	result := cpns.Db.Create(review)
+	err := result.Error
+	if err == nil && result.RowsAffected == 0 {
+		return fmt.Errorf("For some reason the database could not create a vote")
+	}
+	return err
+}
+
+func (cpns *CPNS) VotePhoto(photo *entities.PhotoVote) error {
+	result := cpns.Db.Create(photo)
+	err := result.Error
+	if err == nil && result.RowsAffected == 0 {
+		return fmt.Errorf("For some reason the database could not create a vote")
+	}
+	return err
 }

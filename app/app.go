@@ -6,6 +6,7 @@ import (
 )
 
 type DAO interface {
+	Init() error
 	CreateUser(email string, username string, pass string, administrator bool, banned bool) (*entities.User, error)
 	Authenticate(email string, pass string) (*entities.User, error)
 	GetUsers() ([]entities.User, error)
@@ -19,8 +20,13 @@ type DAO interface {
 	ReviewPlayground(review *entities.PlaygroundReview) error
 	PlaygroundGallery(playgroundId uint) ([]entities.PlaygroundPhoto, error)
 	PendingPhotos() ([]entities.PlaygroundPhoto, error)
+	UploadPhoto(photo *entities.PlaygroundPhoto, filename string, data []byte) error
 	GetPhoto(photoId uint) (entities.PlaygroundPhoto, error)
 	UpdatePhoto(photo *entities.PlaygroundPhoto) error
+	GetReview(reviewId uint) (entities.PlaygroundReview, error)
+	UpdateReview(review *entities.PlaygroundReview) error
+	VoteReview(review *entities.ReviewVote) error
+	VotePhoto(photo *entities.PhotoVote) error
 }
 
 type WebApp struct {
