@@ -13,10 +13,24 @@ import (
 
 func PlaygroundsDataMiddleware(d app.DAO, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rawUser := r.Context().Value("user")
+		var user *entities.User
+		if rawUser != nil {
+			tmp := rawUser.(entities.User)
+			user = &tmp
+		}
 		playgrounds, err := d.GetPlaygrounds()
 		if err != nil {
 			http.Error(w, "Could not fetch playgrounds for some reason", http.StatusInternalServerError)
 			return
+		}
+		for _, playground := range playgrounds {
+			playground.SelectedPhotos = make([]entities.PlaygroundPhoto, 0)
+			for _, photo := range playground.Photos {
+				if (user != nil && user.Administrator) || (photo.Approved != nil && *photo.Approved && photo.Selected) {
+					playground.SelectedPhotos = append(playground.SelectedPhotos, photo)
+				}
+			}
 		}
 		templateData := map[string]interface{}{
 			"playgrounds": playgrounds,

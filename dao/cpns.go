@@ -17,7 +17,7 @@ type CPNS struct {
 }
 
 func (cpns *CPNS) Init() error {
-	err := os.MkdirAll(cpns.FSStoragePath, os.ModePerm)
+	err := os.MkdirAll(filepath.Join(cpns.FSStoragePath, "photos"), os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("Could not intialize CPNS: %v", err)
 	}

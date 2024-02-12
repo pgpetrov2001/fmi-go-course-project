@@ -37,12 +37,17 @@ func ApprovePhoto(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 
 func GetPhoto(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 	photo, _ := r.Context().Value("photo").(entities.PlaygroundPhoto)
-	user, _ := r.Context().Value("user").(entities.User)
+	rawUser := r.Context().Value("user")
+	var user *entities.User
+	if rawUser != nil {
+		tmp := rawUser.(entities.User)
+		user = &tmp
+	}
 	allow := false
-	if user.Administrator {
+	if user != nil && user.Administrator {
 		allow = true
 	}
-	if photo.UserId == user.ID {
+	if user != nil && photo.UserId == user.ID {
 		allow = true
 	}
 	if photo.Approved != nil && *photo.Approved {

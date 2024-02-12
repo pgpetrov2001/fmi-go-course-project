@@ -25,12 +25,7 @@
 <main>
     <button>Add new Playground</button>
     {{range .playgrounds}}
-    <div class="playground" data-id="{{.ID}}">
-        <h3>{{.SiteNumber}} at {{.Location}}</h3>
-        {{range .Photos}}
-        {{if and .Approved .Selected}}<img src="/img/{{.ID}}">{{end}}
-        {{end}}
-    </div>
+        {{template "playground" .}}
     {{end}}
 </main>
 <footer><a href="/about">About</a></footer>

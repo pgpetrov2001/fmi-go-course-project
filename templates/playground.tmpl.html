@@ -1,0 +1,7 @@
+{{define "playground"}}
+<div class="playground" data-id="{{.ID}}">
+    <h3>{{.SiteNumber}} at {{.Location}}</h3>
+    {{template "carousel" .SelectedPhotos}}
+</div>
+
+{{end}}

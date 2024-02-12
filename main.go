@@ -20,17 +20,32 @@ import (
 var workDir, _ = os.Getwd()
 
 func CPNSRun(w *app.WebApp) error {
-	mapTemplate := template.Must(template.ParseFiles("./templates/index.tmpl.html"))
-	loginTemplate := template.Must(template.ParseFiles("./templates/login.tmpl.html"))
-	registerTemplate := template.Must(template.ParseFiles("./templates/register.tmpl.html"))
-	playgroundsTemplate := template.Must(template.ParseFiles("./templates/playgrounds.tmpl.html"))
+	funcMap := template.FuncMap{
+		"sub": func(a, b int) int {
+			return a - b
+		},
+		"add": func(a, b int) int {
+			return a + b
+		},
+		"mod": func(a, b int) int {
+			return a % b
+		},
+		"mul": func(a, b int) int {
+			return a * b
+		},
+	}
+
+	mapTemplate := template.Must(template.New("").Funcs(funcMap).ParseFiles("./templates/index.tmpl.html"))
+	loginTemplate := template.Must(template.New("").Funcs(funcMap).ParseFiles("./templates/login.tmpl.html"))
+	registerTemplate := template.Must(template.New("").Funcs(funcMap).ParseFiles("./templates/register.tmpl.html"))
+	playgroundsTemplate := template.Must(template.New("playgrounds.tmpl.html").Funcs(funcMap).ParseFiles("./templates/playgrounds.tmpl.html", "./templates/playground.tmpl.html", "./templates/common.tmpl.html"))
 
 	r := mux.NewRouter()
 	r.Use(utils.LoggingMiddleware)
 
 	r.Handle("/", http.RedirectHandler("/map", http.StatusPermanentRedirect))
 	r.HandleFunc("/map", routes.RenderTemplate(mapTemplate)).Methods("GET")
-	r.Handle("/playgrounds", routes.PlaygroundsDataMiddleware(w.Dao, routes.RenderTemplate(playgroundsTemplate))).Methods("GET")
+	r.Handle("/playgrounds", utils.GetUserMiddleware(routes.PlaygroundsDataMiddleware(w.Dao, routes.RenderTemplate(playgroundsTemplate)))).Methods("GET")
 	r.Handle("/sign-in", routes.SignInDataMiddleware(routes.RenderTemplate(loginTemplate))).Methods("GET")
 	r.Handle("/sign-up", routes.SignUpDataMiddleware(routes.RenderTemplate(registerTemplate))).Methods("GET")
 	r.Handle("/api/login", w.WebappWrapper(routes.Login)).Methods("POST")

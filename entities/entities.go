@@ -22,13 +22,14 @@ type Playground struct {
 	gorm.Model
 	SiteNumber string `gorm:"unique;not null"`
 	//site number can be used as identification of the site when reporting an issue to the authorities for example
-	Latitude  float64
-	Longitude float64
-	Area      int `gorm:"check:area >= 0"`
-	Location  string
-	Ownership string
-	Reviews   []PlaygroundReview
-	Photos    []PlaygroundPhoto
+	Latitude       float64
+	Longitude      float64
+	Area           int `gorm:"check:area >= 0"`
+	Location       string
+	Ownership      string
+	Reviews        []PlaygroundReview
+	Photos         []PlaygroundPhoto
+	SelectedPhotos []PlaygroundPhoto
 }
 
 //TODO: add relation between playgrounds and their selected photos to be shown

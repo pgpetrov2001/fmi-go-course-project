@@ -1,0 +1,56 @@
+{{define "carousel"}}
+
+{{ $numPhotos := len . }}
+
+{{$initialId := 0}}
+{{if gt $numPhotos 0}}
+  {{$initialPhoto := index . 0}}
+  {{$initialId = $initialPhoto.ID}}
+{{end}}
+
+<div class="carousel-container">
+  <ul class="carousel my-carousel carousel--thumb">
+    {{range .}}
+      <input
+              class="carousel__activator"
+              type="radio"
+              id="photo-{{.ID}}"
+              name="thumb"
+              onclick="document.querySelectorAll('.selected').forEach((el) => el.classList.remove('selected')); document.querySelectorAll('[data-id={{.ID}}]').forEach((el) => el.classList.add('selected'))"
+              {{if eq .ID $initialId}}checked="checked"{{end}}/>
+    {{end}}
+
+    {{range $i, $photo := .}}
+      {{ $prevIndex := sub $i 1 }}
+      {{ $prevIndex = add $prevIndex $numPhotos }}
+      {{ $prevIndex = mod $prevIndex $numPhotos }}
+      {{ $nextIndex := add $i 1 }}
+      {{ $nextIndex = mod $nextIndex $numPhotos }}
+      {{ $prevPhoto := index . $prevIndex }}
+      {{ $nextPhoto := index . $nextIndex }}
+      <div class="carousel__controls {{if eq $photo.ID $initialId}}selected{{end}}" data-id="{{$photo.ID}}">
+        <label class="carousel__control carousel__control--backward" for="photo-{{$prevPhoto.ID}}"></label>
+        <label class="carousel__control carousel__control--forward" for="photo-{{$nextPhoto.ID}}"></label>
+      </div>
+    {{end}}
+    {{range $i, $photo := .}}
+      {{ $translateX := mul $i 100 }}
+      <li
+              class="carousel__slide photo {{if eq $photo.ID $initialId}}selected{{end}}"
+              data-id="{{$photo.ID}}"
+              style="background-image: url('/img/{{$photo.ID}}'); transform: translateX({{$translateX}}%)">
+      </li>
+    {{end}}
+    <div class="carousel__indicators">
+      {{range .}}
+        <label
+                class="carousel__indicator {{if eq .ID $initialId}}selected{{end}}"
+                data-id="{{.ID}}"
+                for="photo-{{.ID}}"
+                style="background-image: url('/img/{{.ID}}')">
+        </label>
+      {{end}}
+    </div>
+  </ul>
+</div>
+{{end}}
