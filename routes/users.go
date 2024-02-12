@@ -27,11 +27,7 @@ func GetUsers(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 }
 
 func GetUser(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
-	userId, err := utils.GetIdFromRouteParam(w, r, "userId")
-	if err != nil {
-		return
-	}
-
+	userId, _ := r.Context().Value("userId").(uint)
 	user, err := a.Dao.GetUser(userId)
 	var userData []byte
 	fail := false
@@ -50,10 +46,7 @@ func GetUser(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 }
 
 func PatchUser(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
-	userId, err := utils.GetIdFromRouteParam(w, r, "userId")
-	if err != nil {
-		return
-	}
+	userId, _ := r.Context().Value("userId").(uint)
 	user, err := a.Dao.GetUser(userId)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Did not find user with id %d", userId), http.StatusBadRequest)
@@ -98,10 +91,7 @@ func PatchUser(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUser(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
-	userId, err := utils.GetIdFromRouteParam(w, r, "userId")
-	if err != nil {
-		return
-	}
+	userId, _ := r.Context().Value("userId").(uint)
 	user, err := a.Dao.GetUser(userId)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Did not find user with id %d", userId), http.StatusBadRequest)

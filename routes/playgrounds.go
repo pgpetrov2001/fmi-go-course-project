@@ -4,7 +4,6 @@ import (
 	"context"
 	"course-project/app"
 	"course-project/entities"
-	"course-project/utils"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,12 +13,7 @@ import (
 
 func GetPlaygroundMiddleware(d app.DAO, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		playgroundId, err := utils.GetIdFromRouteParam(w, r, "playgroundId")
-		if err != nil {
-			http.Error(w, "Invalid value for playgroundId", http.StatusBadRequest)
-			return
-		}
-
+		playgroundId, _ := r.Context().Value("playgroundId").(uint)
 		playground, err := d.GetPlayground(playgroundId)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Could not get playground with id %u", playgroundId), http.StatusBadRequest)
@@ -33,12 +27,7 @@ func GetPlaygroundMiddleware(d app.DAO, next http.Handler) http.Handler {
 
 func GetReviewMiddleware(d app.DAO, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		reviewId, err := utils.GetIdFromRouteParam(w, r, "reviewId")
-		if err != nil {
-			http.Error(w, "Invalid value for reviewId", http.StatusBadRequest)
-			return
-		}
-
+		reviewId, _ := r.Context().Value("reviewId").(uint)
 		review, err := d.GetReview(reviewId)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Could not get review with id %u", reviewId), http.StatusBadRequest)
@@ -52,12 +41,7 @@ func GetReviewMiddleware(d app.DAO, next http.Handler) http.Handler {
 
 func GetPhotoMiddleware(d app.DAO, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		photoId, err := utils.GetIdFromRouteParam(w, r, "photoId")
-		if err != nil {
-			http.Error(w, "Invalid value for photoId", http.StatusBadRequest)
-			return
-		}
-
+		photoId, _ := r.Context().Value("photoId").(uint)
 		photo, err := d.GetPhoto(photoId)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Could not get photo with id %u", photoId), http.StatusBadRequest)
@@ -214,11 +198,7 @@ func ReviewPlayground(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 }
 
 func PlaygroundGallery(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
-	playgroundId, err := utils.GetIdFromRouteParam(w, r, "playgroundId")
-	if err != nil {
-		http.Error(w, "Invalid id specified", http.StatusBadRequest)
-		return
-	} //actually this parsing of id can be exported to a middleware function, because context supports any type
+	playgroundId, _ := r.Context().Value("playgroundId").(uint)
 	photos, err := a.Dao.PlaygroundGallery(playgroundId)
 	if err != nil {
 		http.Error(w, "Could not fetch gallery for playground", http.StatusInternalServerError)

@@ -42,12 +42,9 @@ func GetUserMiddleware(next http.Handler) http.Handler {
 }
 
 func UserAccessRightsMiddleware(next http.Handler) http.Handler {
-	return GetUserMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, ok := r.Context().Value("user").(entities.User)
-		userId, err := GetIdFromRouteParam(w, r, "userId")
-		if err != nil {
-			return
-		}
+	return GetUserMiddleware(GetIdParamMiddleware("userId", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, ok := r.Context().Value("user").(entities.User) // logged user
+		userId, _ := r.Context().Value("userId").(uint)       // requested user
 
 		forbidden := false
 		if !ok {
@@ -63,7 +60,7 @@ func UserAccessRightsMiddleware(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
-	}))
+	})))
 }
 
 func AccessRightsMiddleware(d app.DAO, admin bool, next http.Handler) http.Handler {

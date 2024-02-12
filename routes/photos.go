@@ -2,7 +2,6 @@ package routes
 
 import (
 	"course-project/app"
-	"course-project/utils"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -24,11 +23,7 @@ func PendingPhotos(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 }
 
 func ApprovePhoto(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
-	id, err := utils.GetIdFromRouteParam(w, r, "photoId")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	id, _ := r.Context().Value("photoId").(uint)
 	photo, err := a.Dao.GetPhoto(id)
 	if err != nil {
 		http.Error(w, "Could not fetch photo info", http.StatusInternalServerError)
