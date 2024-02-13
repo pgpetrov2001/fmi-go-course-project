@@ -22,7 +22,7 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func GetUserMiddleware(next http.Handler) http.Handler {
+func GetUserMiddleware(d app.DAO, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := Store.Get(r, "sessionID")
 		if err != nil {
@@ -30,19 +30,28 @@ func GetUserMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		user, ok := session.Values["user"].(*entities.User)
-		if !ok || user == nil {
+		userIdVal := session.Values["userId"]
+
+		if userIdVal == nil {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		req := r.WithContext(context.WithValue(r.Context(), "user", *user))
+		userId := userIdVal.(uint)
+		user, err := d.GetUser(userId)
+		if err != nil {
+			log.Printf("Dangling session for user id %d\n", userId)
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		req := r.WithContext(context.WithValue(r.Context(), "user", user))
 		next.ServeHTTP(w, req)
 	})
 }
 
-func UserAccessRightsMiddleware(next http.Handler) http.Handler {
-	return GetUserMiddleware(GetIdParamMiddleware("userId", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func UserAccessRightsMiddleware(d app.DAO, next http.Handler) http.Handler {
+	return GetUserMiddleware(d, GetIdParamMiddleware("userId", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, ok := r.Context().Value("user").(entities.User) // logged user
 		userId, _ := r.Context().Value("userId").(uint)       // requested user
 
@@ -63,15 +72,18 @@ func UserAccessRightsMiddleware(next http.Handler) http.Handler {
 	})))
 }
 
-func AccessRightsMiddleware(d app.DAO, admin bool, next http.Handler) http.Handler {
-	return GetUserMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func AccessRightsMiddleware(d app.DAO, admin bool, redirectOnFail bool, next http.Handler) http.Handler {
+	return GetUserMiddleware(d, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, ok := r.Context().Value("user").(entities.User)
 		if !ok {
+			log.Printf("not ok\n")
 			//missing value means user is not logged in
 			if admin {
 				http.Error(w, "You don't have access rights for this page.", http.StatusForbidden)
-			} else {
+			} else if redirectOnFail {
 				http.Redirect(w, r, "/sign-in", http.StatusSeeOther)
+			} else {
+				http.Error(w, "You need to be logged in to perform this action", http.StatusForbidden)
 			}
 			return
 		}

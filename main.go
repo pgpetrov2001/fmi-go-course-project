@@ -33,11 +33,14 @@ func CPNSRun(w *app.WebApp) error {
 		"mul": func(a, b int) int {
 			return a * b
 		},
+		"safeHTMLAttr": func(attr, val string) template.HTMLAttr {
+			return template.HTMLAttr(fmt.Sprintf("%s=\"%s\"", attr, val))
+		},
 	}
 
-	mapTemplate := template.Must(template.New("").Funcs(funcMap).ParseFiles("./templates/index.tmpl.html"))
-	loginTemplate := template.Must(template.New("").Funcs(funcMap).ParseFiles("./templates/login.tmpl.html"))
-	registerTemplate := template.Must(template.New("").Funcs(funcMap).ParseFiles("./templates/register.tmpl.html"))
+	mapTemplate := template.Must(template.New("index.tmpl.html").Funcs(funcMap).ParseFiles("./templates/index.tmpl.html"))
+	loginTemplate := template.Must(template.New("login.tmpl.html").Funcs(funcMap).ParseFiles("./templates/login.tmpl.html"))
+	registerTemplate := template.Must(template.New("register.tmpl.html").Funcs(funcMap).ParseFiles("./templates/register.tmpl.html"))
 	playgroundsTemplate := template.Must(template.New("playgrounds.tmpl.html").Funcs(funcMap).ParseFiles("./templates/playgrounds.tmpl.html", "./templates/playground.tmpl.html", "./templates/common.tmpl.html"))
 
 	r := mux.NewRouter()
@@ -45,29 +48,29 @@ func CPNSRun(w *app.WebApp) error {
 
 	r.Handle("/", http.RedirectHandler("/map", http.StatusPermanentRedirect))
 	r.HandleFunc("/map", routes.RenderTemplate(mapTemplate)).Methods("GET")
-	r.Handle("/playgrounds", utils.GetUserMiddleware(routes.PlaygroundsDataMiddleware(w.Dao, routes.RenderTemplate(playgroundsTemplate)))).Methods("GET")
+	r.Handle("/playgrounds", utils.GetUserMiddleware(w.Dao, routes.PlaygroundsDataMiddleware(w.Dao, routes.RenderTemplate(playgroundsTemplate)))).Methods("GET")
 	r.Handle("/sign-in", routes.SignInDataMiddleware(routes.RenderTemplate(loginTemplate))).Methods("GET")
 	r.Handle("/sign-up", routes.SignUpDataMiddleware(routes.RenderTemplate(registerTemplate))).Methods("GET")
 	r.Handle("/api/login", w.WebappWrapper(routes.Login)).Methods("POST")
 	r.Handle("/api/register", w.WebappWrapper(routes.Register)).Methods("POST")
 	r.Handle("/api/logout", w.WebappWrapper(routes.Logout)).Methods("POST")
-	r.Handle("/api/users", utils.AccessRightsMiddleware(w.Dao, true, w.WebappWrapper(routes.GetUsers))).Methods("GET")
-	r.Handle("/api/users/{userId}", utils.UserAccessRightsMiddleware(w.WebappWrapper(routes.GetUser))).Methods("GET")
-	r.Handle("/api/users/{userId}", utils.UserAccessRightsMiddleware(w.WebappWrapper(routes.PatchUser))).Methods("PATCH")
-	r.Handle("/api/users/{userId}", utils.UserAccessRightsMiddleware(w.WebappWrapper(routes.DeleteUser))).Methods("DELETE")
-	r.Handle("/api/users", utils.AccessRightsMiddleware(w.Dao, true, w.WebappWrapper(routes.PostUser))).Methods("POST")
-	r.Handle("/api/playground/{playgroundId}", utils.AccessRightsMiddleware(w.Dao, true, utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.GetPlayground)))).Methods("GET")
-	r.Handle("/api/playground/{playgroundId}", utils.AccessRightsMiddleware(w.Dao, true, utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.PatchPlayground)))).Methods("PATCH")
-	r.Handle("/api/playground/{playgroundId}", utils.AccessRightsMiddleware(w.Dao, true, utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.DeletePlayground)))).Methods("DELETE")
-	r.Handle("/api/playground/{playgroundId}", utils.AccessRightsMiddleware(w.Dao, true, utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.PostPlayground)))).Methods("POST")
-	r.Handle("/api/playground/{playgroundId}/review", utils.AccessRightsMiddleware(w.Dao, false, utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.ReviewPlayground)))).Methods("POST")
+	r.Handle("/api/users", utils.AccessRightsMiddleware(w.Dao, true, false, w.WebappWrapper(routes.GetUsers))).Methods("GET")
+	r.Handle("/api/users/{userId}", utils.UserAccessRightsMiddleware(w.Dao, w.WebappWrapper(routes.GetUser))).Methods("GET")
+	r.Handle("/api/users/{userId}", utils.UserAccessRightsMiddleware(w.Dao, w.WebappWrapper(routes.PatchUser))).Methods("PATCH")
+	r.Handle("/api/users/{userId}", utils.UserAccessRightsMiddleware(w.Dao, w.WebappWrapper(routes.DeleteUser))).Methods("DELETE")
+	r.Handle("/api/users", utils.AccessRightsMiddleware(w.Dao, true, false, w.WebappWrapper(routes.PostUser))).Methods("POST")
+	r.Handle("/api/playground/{playgroundId}", utils.AccessRightsMiddleware(w.Dao, true, false, utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.GetPlayground)))).Methods("GET")
+	r.Handle("/api/playground/{playgroundId}", utils.AccessRightsMiddleware(w.Dao, true, false, utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.PatchPlayground)))).Methods("PATCH")
+	r.Handle("/api/playground/{playgroundId}", utils.AccessRightsMiddleware(w.Dao, true, false, utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.DeletePlayground)))).Methods("DELETE")
+	r.Handle("/api/playground/{playgroundId}", utils.AccessRightsMiddleware(w.Dao, true, false, utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.PostPlayground)))).Methods("POST")
+	r.Handle("/api/playground/{playgroundId}/review", utils.AccessRightsMiddleware(w.Dao, false, false, utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.ReviewPlayground)))).Methods("POST")
 	r.Handle("/api/playground/{playgroundId}/gallery", utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.PlaygroundGallery))).Methods("GET")
-	r.Handle("/api/playground/{playgroundId}/upload", utils.AccessRightsMiddleware(w.Dao, false, utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.UploadPlaygroundPhoto)))).Methods("POST")
-	r.Handle("/api/pending_photos", utils.AccessRightsMiddleware(w.Dao, true, w.WebappWrapper(routes.PendingPhotos))).Methods("GET")
-	r.Handle("/api/approve/{photoId}", utils.AccessRightsMiddleware(w.Dao, true, utils.GetPhotoMiddleware(w.Dao, w.WebappWrapper(routes.ApprovePhoto)))).Methods("POST")
-	r.Handle("/api/review/{reviewId}/vote", utils.AccessRightsMiddleware(w.Dao, false, utils.GetReviewMiddleware(w.Dao, w.WebappWrapper(routes.VoteReview)))).Methods("POST")
-	r.Handle("/api/photo/{photoId}/vote", utils.AccessRightsMiddleware(w.Dao, false, utils.GetPhotoMiddleware(w.Dao, w.WebappWrapper(routes.VotePhoto)))).Methods("POST")
-	r.Handle("/img/{photoId}", utils.GetUserMiddleware(utils.GetPhotoMiddleware(w.Dao, w.WebappWrapper(routes.GetPhoto)))).Methods("GET")
+	r.Handle("/api/playground/{playgroundId}/upload", utils.AccessRightsMiddleware(w.Dao, false, false, utils.GetPlaygroundMiddleware(w.Dao, w.WebappWrapper(routes.UploadPlaygroundPhotos)))).Methods("POST")
+	r.Handle("/api/pending_photos", utils.AccessRightsMiddleware(w.Dao, true, false, w.WebappWrapper(routes.PendingPhotos))).Methods("GET")
+	r.Handle("/api/approve/{photoId}", utils.AccessRightsMiddleware(w.Dao, true, false, utils.GetPhotoMiddleware(w.Dao, w.WebappWrapper(routes.ApprovePhoto)))).Methods("POST")
+	r.Handle("/api/review/{reviewId}/vote", utils.AccessRightsMiddleware(w.Dao, false, false, utils.GetReviewMiddleware(w.Dao, w.WebappWrapper(routes.VoteReview)))).Methods("POST")
+	r.Handle("/api/photo/{photoId}/vote", utils.AccessRightsMiddleware(w.Dao, false, false, utils.GetPhotoMiddleware(w.Dao, w.WebappWrapper(routes.VotePhoto)))).Methods("POST")
+	r.Handle("/img/{photoId}", utils.GetUserMiddleware(w.Dao, utils.GetPhotoMiddleware(w.Dao, w.WebappWrapper(routes.GetPhoto)))).Methods("GET")
 
 	w.Mux.Handle("/", r)
 

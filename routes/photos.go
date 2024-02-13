@@ -59,7 +59,7 @@ func GetPhoto(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 	}
 	data, err := a.Dao.GetPhotoContents(&photo)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Could not retrieve photo with id %u"), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Could not retrieve photo with id %d"), http.StatusBadRequest)
 		return
 	}
 	w.WriteHeader(200)

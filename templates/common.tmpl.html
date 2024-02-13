@@ -1,5 +1,6 @@
 {{define "carousel"}}
 
+{{ $selectedPhotos := . }}
 {{ $numPhotos := len . }}
 
 {{$initialId := 0}}
@@ -8,15 +9,17 @@
   {{$initialId = $initialPhoto.ID}}
 {{end}}
 
+{{if gt $numPhotos 0}}
 <div class="carousel-container">
   <ul class="carousel my-carousel carousel--thumb">
     {{range .}}
+      {{ $onclick := .ID | printf "document.querySelectorAll('.selected').forEach((el) => el.classList.remove('selected')); document.querySelectorAll('[data-photo-id=&quot;%d&quot;]').forEach((el) => el.classList.add('selected'))" }}
       <input
               class="carousel__activator"
               type="radio"
               id="photo-{{.ID}}"
               name="thumb"
-              onclick="document.querySelectorAll('.selected').forEach((el) => el.classList.remove('selected')); document.querySelectorAll('[data-id={{.ID}}]').forEach((el) => el.classList.add('selected'))"
+              {{ safeHTMLAttr "onclick" $onclick }}
               {{if eq .ID $initialId}}checked="checked"{{end}}/>
     {{end}}
 
@@ -26,9 +29,9 @@
       {{ $prevIndex = mod $prevIndex $numPhotos }}
       {{ $nextIndex := add $i 1 }}
       {{ $nextIndex = mod $nextIndex $numPhotos }}
-      {{ $prevPhoto := index . $prevIndex }}
-      {{ $nextPhoto := index . $nextIndex }}
-      <div class="carousel__controls {{if eq $photo.ID $initialId}}selected{{end}}" data-id="{{$photo.ID}}">
+      {{ $prevPhoto := index $selectedPhotos $prevIndex }}
+      {{ $nextPhoto := index $selectedPhotos $nextIndex }}
+      <div class="carousel__controls {{if eq $photo.ID $initialId}}selected{{end}}" data-photo-id="{{$photo.ID}}">
         <label class="carousel__control carousel__control--backward" for="photo-{{$prevPhoto.ID}}"></label>
         <label class="carousel__control carousel__control--forward" for="photo-{{$nextPhoto.ID}}"></label>
       </div>
@@ -37,20 +40,23 @@
       {{ $translateX := mul $i 100 }}
       <li
               class="carousel__slide photo {{if eq $photo.ID $initialId}}selected{{end}}"
-              data-id="{{$photo.ID}}"
-              style="background-image: url('/img/{{$photo.ID}}'); transform: translateX({{$translateX}}%)">
+              data-photo-id="{{$photo.ID}}"
+              style="background-image: url('/img/{{$photo.ID}}');">
       </li>
     {{end}}
     <div class="carousel__indicators">
-      {{range .}}
+    {{range .}}
         <label
                 class="carousel__indicator {{if eq .ID $initialId}}selected{{end}}"
-                data-id="{{.ID}}"
+                data-photo-id="{{.ID}}"
                 for="photo-{{.ID}}"
                 style="background-image: url('/img/{{.ID}}')">
         </label>
-      {{end}}
+    {{end}}
     </div>
   </ul>
 </div>
+{{else}}
+<p>No photos available at the moment.</p>
+{{end}}
 {{end}}

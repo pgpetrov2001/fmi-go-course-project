@@ -150,7 +150,7 @@ func Login(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Values["user"] = user
+	session.Values["userId"] = user.ID
 	session.Save(r, w)
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -163,7 +163,7 @@ func Logout(_ *app.WebApp, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Values["user"] = nil
+	session.Values["userId"] = nil
 	session.Save(r, w)
 
 	http.Redirect(w, r, "/sign-in", http.StatusSeeOther)

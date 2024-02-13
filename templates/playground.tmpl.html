@@ -2,6 +2,9 @@
 <div class="playground" data-id="{{.ID}}">
     <h3>{{.SiteNumber}} at {{.Location}}</h3>
     {{template "carousel" .SelectedPhotos}}
+    <br/>
+    <input type="file" class="upload-photos" data-id="{{.ID}}" multiple>
+    <button class="upload-photos" data-id="{{.ID}}">Upload</button>
 </div>
 
 {{end}}

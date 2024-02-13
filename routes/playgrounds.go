@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -24,11 +25,11 @@ func PlaygroundsDataMiddleware(d app.DAO, next http.Handler) http.Handler {
 			http.Error(w, "Could not fetch playgrounds for some reason", http.StatusInternalServerError)
 			return
 		}
-		for _, playground := range playgrounds {
-			playground.SelectedPhotos = make([]entities.PlaygroundPhoto, 0)
+		for i, playground := range playgrounds {
+			playgrounds[i].SelectedPhotos = make([]entities.PlaygroundPhoto, 0)
 			for _, photo := range playground.Photos {
 				if (user != nil && user.Administrator) || (photo.Approved != nil && *photo.Approved && photo.Selected) {
-					playground.SelectedPhotos = append(playground.SelectedPhotos, photo)
+					playgrounds[i].SelectedPhotos = append(playgrounds[i].SelectedPhotos, photo)
 				}
 			}
 		}
@@ -225,52 +226,58 @@ func VotePhoto(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte{})
 }
 
-func UploadPlaygroundPhoto(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
+func UploadPlaygroundPhotos(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value("user").(entities.User)
 	playground, _ := r.Context().Value("playground").(entities.Playground)
 
 	err := r.ParseMultipartForm(10 * 1024 * 1024) // 10 MB max memory
 	if err != nil {
-		http.Error(w, "Error parsing form", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Error parsing form: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	// Get the uploaded file
-	file, header, err := r.FormFile("file")
-	if err != nil {
-		http.Error(w, "Error retrieving file", http.StatusBadRequest)
-		return
-	}
-	defer file.Close()
+	files := r.MultipartForm.File["files[]"]
 
-	// Read the file into a byte array
-	fileBytes, err := io.ReadAll(file)
-	if err != nil {
-		http.Error(w, "Error reading file bytes", http.StatusInternalServerError)
-		return
-	}
-	filename := header.Filename
+	var photos []entities.PlaygroundPhoto
 
-	approved := new(bool)
-	*approved = false
-	photo := entities.PlaygroundPhoto{
-		Playground:   playground,
-		PlaygroundID: playground.ID,
-		User:         user,
-		UserId:       user.ID,
-		Approved:     approved,
-		Selected:     false,
+	for _, file := range files {
+		uploadedFile, err := file.Open()
+		if err != nil {
+			http.Error(w, "Unable to open uploaded file", http.StatusBadRequest)
+			return
+		}
+		defer uploadedFile.Close()
+
+		fileBytes, err := io.ReadAll(uploadedFile)
+		if err != nil {
+			http.Error(w, "Error reading file bytes", http.StatusInternalServerError)
+			return
+		}
+
+		approved := new(bool)
+		*approved = false
+		photo := entities.PlaygroundPhoto{
+			Playground:   playground,
+			PlaygroundID: playground.ID,
+			User:         user,
+			UserId:       user.ID,
+			Approved:     approved,
+			Selected:     false,
+		}
+		log.Printf("Uploading photo %s with %d bytes\n", file.Filename, len(fileBytes))
+		err = a.Dao.UploadPhoto(&photo, file.Filename, fileBytes)
+		if err != nil {
+			http.Error(w, "Could not upload one of the photos right now", http.StatusInternalServerError)
+			return
+		}
+		photos = append(photos, photo)
 	}
-	err = a.Dao.UploadPhoto(&photo, filename, fileBytes)
-	if err != nil {
-		http.Error(w, "Could not upload photo right now", http.StatusInternalServerError)
-		return
-	}
-	photoData, err := json.Marshal(photo)
+
+	photosData, err := json.Marshal(photos)
 	if err != nil {
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(200)
-	w.Write(photoData)
+	w.Write(photosData)
 }

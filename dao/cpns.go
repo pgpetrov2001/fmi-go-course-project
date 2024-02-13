@@ -129,7 +129,7 @@ func (cpns *CPNS) ReviewPlayground(review *entities.PlaygroundReview) error {
 		}
 	}
 	if alreadyRated {
-		return fmt.Errorf("User %s has already submitted a review for playground with id %u", review.User.Username, review.PlaygroundID)
+		return fmt.Errorf("User %s has already submitted a review for playground with id %d", review.User.Username, review.PlaygroundID)
 	}
 	result := cpns.Db.Create(review)
 	err := result.Error
@@ -161,7 +161,7 @@ func (cpns *CPNS) UploadPhoto(photo *entities.PlaygroundPhoto, filename string, 
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(cpns.FSStoragePath, "photos", fmt.Sprintf("%u.%s", photo.ID, photo.Extension))
+	path := filepath.Join(cpns.FSStoragePath, "photos", fmt.Sprintf("%d.%s", photo.ID, photo.Extension))
 	err = os.WriteFile(path, data, 0644)
 	return err
 }
@@ -188,7 +188,7 @@ func (cpns *CPNS) GetPhoto(photoId uint) (entities.PlaygroundPhoto, error) {
 }
 
 func (cpns *CPNS) GetPhotoContents(photo *entities.PlaygroundPhoto) ([]byte, error) {
-	fillePath := path.Join(cpns.FSStoragePath, "photos", fmt.Sprintf("%u.%s", photo.ID, photo.Extension))
+	fillePath := path.Join(cpns.FSStoragePath, "photos", fmt.Sprintf("%d.%s", photo.ID, photo.Extension))
 	return os.ReadFile(fillePath)
 }
 
