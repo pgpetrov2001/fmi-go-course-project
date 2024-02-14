@@ -150,6 +150,15 @@ func (cpns *CPNS) DeletePlayground(playground *entities.Playground) error {
 	return result.Error
 }
 
+func (cpns *CPNS) PlaygroundLoadAssociations(playground *entities.Playground) error {
+	err := cpns.Db.Model(playground).
+		Preload("Reviews").
+		Preload("Photos").
+		Preload("Photos.User").
+		Find(playground).Error
+	return err
+}
+
 func (cpns *CPNS) ReviewPlayground(review *entities.PlaygroundReview) error {
 	alreadyRated := false
 	for _, currentReview := range review.Playground.Reviews {

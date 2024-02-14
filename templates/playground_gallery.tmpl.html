@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>CPNS</title>
+    <link rel="stylesheet" href="/static/lib/fontawesome/css/all.min.css">
+    <link href="/static/stylesheets/common.css" rel="stylesheet" />
+    <link href="/static/stylesheets/gallery.css" rel="stylesheet" />
+</head>
+<body>
+{{template "header" .}}
+<main>
+    <div id="gallery">
+        {{$user := .user}}
+    {{range .playground.Photos}}
+        {{$notAdmin := not $user.Administrator}}
+        {{$userUploadedPhoto := eq $user.ID .User.ID}}
+        {{$notUserUploadedPhoto := not $userUploadedPhoto}}
+        {{$approved := derefBool .Approved}}
+        {{$notApproved := not $approved}}
+        {{if and $notAdmin $notUserUploadedPhoto $notApproved}}{{continue}}{{end}}
+        <div class="gallery-item" data-id="{{.ID}}">
+            <a target="_blank" href="/img/{{.ID}}">
+                <img src="/img/{{.ID}}" width="600" height="400">
+            </a>
+            <div class="desc">
+                <div>
+                    Posted by: {{.User.Username}}
+                </div>
+                <div>
+                    Approved:
+                    {{if $user.Administrator}}
+                    <input class="approved" data-attr="Approved" type="checkbox" {{if derefBool .Approved}}checked="checked"{{end}}>
+                    {{else}}
+                    {{if derefBool .Approved}}Yes{{else}}No{{end}}
+                    {{end}}
+                </div>
+                <div>
+                    Selected:
+                    {{if $user.Administrator}}
+                    <input class="selected" data-attr="Selected" type="checkbox" {{if .Selected}}checked="checked"{{end}}>
+                    {{else}}
+                    {{if .Selected}}Yes{{else}}No{{end}}
+                    {{end}}
+                </div>
+            </div>
+        </div>
+    {{end}}
+    </div>
+</main>
+<footer><a href="/about">About</a></footer>
+<script src="/static/scripts/playground_gallery.js"></script>
+</body>
+</html>

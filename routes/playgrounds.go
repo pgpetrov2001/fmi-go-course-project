@@ -62,6 +62,25 @@ func PlaygroundsDataMiddleware(d app.DAO, next http.Handler) http.Handler {
 	})
 }
 
+func PlaygroundGalleryDataMiddleware(d app.DAO, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := r.Context().Value("user").(entities.User)
+		playground := r.Context().Value("playground").(entities.Playground)
+		err := d.PlaygroundLoadAssociations(&playground)
+		if err != nil {
+			http.Error(w, "Unexpected error", http.StatusInternalServerError)
+			return
+		}
+		data := map[string]interface{}{
+			"playground": playground,
+			"page":       "none",
+			"user":       user,
+		}
+		req := r.WithContext(context.WithValue(r.Context(), "data", data))
+		next.ServeHTTP(w, req)
+	})
+}
+
 func GetPlayground(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 	playground := r.Context().Value("playground").(entities.Playground)
 	playgroundData, err := json.Marshal(playground)
@@ -197,22 +216,6 @@ func ReviewPlayground(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 	reviewData, _ := json.Marshal(review)
 	w.WriteHeader(200)
 	w.Write(reviewData)
-}
-
-func PlaygroundGallery(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
-	playgroundId, _ := r.Context().Value("playgroundId").(uint)
-	photos, err := a.Dao.PlaygroundGallery(playgroundId)
-	if err != nil {
-		http.Error(w, "Could not fetch gallery for playground", http.StatusInternalServerError)
-		return
-	}
-	photosData, err := json.Marshal(photos)
-	if err != nil {
-		http.Error(w, "Could not serialize photos", http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(200)
-	w.Write(photosData)
 }
 
 func VoteReview(a *app.WebApp, w http.ResponseWriter, r *http.Request) {

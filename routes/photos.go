@@ -65,3 +65,34 @@ func GetPhoto(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 	w.Write(data)
 }
+
+func PatchPhoto(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
+	photo, _ := r.Context().Value("photo").(entities.PlaygroundPhoto)
+	body, _ := r.Context().Value("body").(map[string]interface{})
+	approvedVal, ok := body["Approved"]
+	if ok {
+		approved, ok := approvedVal.(bool)
+		if !ok {
+			http.Error(w, "Invalid value for Approved attribute on photo", http.StatusBadRequest)
+			return
+		}
+		photo.Approved = new(bool)
+		*photo.Approved = approved
+	}
+	selectedVal, ok := body["Selected"]
+	if ok {
+		selected, ok := selectedVal.(bool)
+		if !ok {
+			http.Error(w, "Invalid value for Selected attribute on photo", http.StatusBadRequest)
+			return
+		}
+		photo.Selected = selected
+	}
+	err := a.Dao.UpdatePhoto(&photo)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error updating photo: %v", err), http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(200)
+	w.Write([]byte{})
+}

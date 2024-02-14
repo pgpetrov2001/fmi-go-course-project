@@ -19,6 +19,7 @@ type DAO interface {
 	GetPlaygrounds() ([]entities.Playground, error)
 	UpdatePlayground(playground *entities.Playground) error
 	DeletePlayground(playground *entities.Playground) error
+	PlaygroundLoadAssociations(playground *entities.Playground) error
 	ReviewPlayground(review *entities.PlaygroundReview) error
 	PlaygroundGallery(playgroundId uint) ([]entities.PlaygroundPhoto, error)
 	PendingPhotos() ([]entities.PlaygroundPhoto, error)

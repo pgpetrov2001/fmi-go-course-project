@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -58,6 +59,10 @@ func ComposeMiddlewares(a, b func(next http.Handler) http.Handler) func(next htt
 }
 
 var TemplateFuncMap = template.FuncMap{
+	"log": func(s interface{}) bool {
+		log.Println(s)
+		return true
+	},
 	"sub": func(a, b int) int {
 		return a - b
 	},
@@ -102,5 +107,8 @@ var TemplateFuncMap = template.FuncMap{
 	},
 	"asfloat64": func(x int) float64 {
 		return float64(x)
+	},
+	"derefBool": func(v *bool) bool {
+		return *v
 	},
 }

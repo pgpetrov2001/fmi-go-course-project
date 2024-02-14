@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>CPNS</title>
+    <link rel="stylesheet" href="/static/lib/fontawesome/css/all.min.css">
+    <link href="/static/stylesheets/common.css" rel="stylesheet" />
+    <link href="/static/stylesheets/profile.css" rel="stylesheet" />
+</head>
+<body>
+{{template "header" .}}
+<main>
+    <div>Email: <input type="email" value="{{.user.Email}}"></div>
+    <div>Username: <input type="text" value="{{.user.Username}}"></div>
+    <div>Administrator: {{if .user.Administrator}}Yes{{else}}No{{end}}</div>
+    <div>Banned: {{if .user.Banned}}Yes{{else}}No{{end}}</div>
+    <input type="submit">
+</main>
+<footer><a href="/about">About</a></footer>
+<script src="/static/scripts/profile.js"></script>
+</body>
+</html>

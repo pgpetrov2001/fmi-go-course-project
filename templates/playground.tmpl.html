@@ -1,7 +1,7 @@
 {{define "playground"}}
 <div class="playground" data-id="{{.Playground.ID}}">
     <div class="playground-header">
-        <h2>{{.Playground.SiteNumber}} at {{.Playground.Location}}</h2>
+        <div class="playground-title"><a href="/playground/{{.Playground.ID}}/gallery">{{.Playground.SiteNumber}} at {{.Playground.Location}}</a></div>
         {{template "star_rating" .Playground.AverageRating}}
         <p>{{len .Playground.Reviews}} reviews</p>
     </div>

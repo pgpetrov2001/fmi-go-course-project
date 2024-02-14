@@ -209,6 +209,19 @@ func UsersDataMiddleware(d app.DAO, next http.Handler) http.Handler {
 	})
 }
 
+func ProfileDataMiddleware(d app.DAO, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := r.Context().Value("user").(entities.User)
+
+		data := map[string]interface{}{
+			"page": "profile",
+			"user": user,
+		}
+		req := r.WithContext(context.WithValue(r.Context(), "data", data))
+		next.ServeHTTP(w, req)
+	})
+}
+
 func SignInDataMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		errVal := r.URL.Query().Get("error")

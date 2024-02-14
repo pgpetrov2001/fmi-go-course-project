@@ -1,3 +1,7 @@
+.playground {
+    border-top: 1px solid black;
+    margin-bottom: 10px;
+}
 .playground-main {
     display: flex;
     justify-content: stretch;
@@ -7,4 +11,17 @@
     .Stars {
         font-size: 50px;
     }
+}
+.playground {
+    a {
+        text-decoration: inherit;
+        color: inherit;
+    }
+    a:hover {
+        font-weight: bolder;
+    }
+}
+
+.playground-title {
+    font-size: 24px;
 }

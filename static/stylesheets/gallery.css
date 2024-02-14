@@ -1,0 +1,26 @@
+#gallery {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+}
+
+.gallery-item {
+    margin: 5px;
+    border: 1px solid #ccc;
+}
+
+.gallery-item:hover {
+    border: 1px solid #777;
+}
+
+.gallery-item img {
+    width: 100%;
+    max-width: 20vw;
+    max-height: 50vh;
+    height: auto;
+}
+
+.gallery-item .desc {
+    padding: 15px;
+    text-align: center;
+}
