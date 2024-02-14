@@ -20,37 +20,23 @@ import (
 var workDir, _ = os.Getwd()
 
 func CPNSRun(w *app.WebApp) error {
-	funcMap := template.FuncMap{
-		"sub": func(a, b int) int {
-			return a - b
-		},
-		"add": func(a, b int) int {
-			return a + b
-		},
-		"mod": func(a, b int) int {
-			return a % b
-		},
-		"mul": func(a, b int) int {
-			return a * b
-		},
-		"safeHTMLAttr": func(attr, val string) template.HTMLAttr {
-			return template.HTMLAttr(fmt.Sprintf("%s=\"%s\"", attr, val))
-		},
-	}
-
-	mapTemplate := template.Must(template.New("index.tmpl.html").Funcs(funcMap).ParseFiles("./templates/index.tmpl.html"))
-	loginTemplate := template.Must(template.New("login.tmpl.html").Funcs(funcMap).ParseFiles("./templates/login.tmpl.html"))
-	registerTemplate := template.Must(template.New("register.tmpl.html").Funcs(funcMap).ParseFiles("./templates/register.tmpl.html"))
-	playgroundsTemplate := template.Must(template.New("playgrounds.tmpl.html").Funcs(funcMap).ParseFiles("./templates/playgrounds.tmpl.html", "./templates/playground.tmpl.html", "./templates/common.tmpl.html"))
+	mapTemplate := template.Must(template.New("index.tmpl.html").Funcs(utils.TemplateFuncMap).ParseFiles("./templates/index.tmpl.html", "./templates/common.tmpl.html"))
+	loginTemplate := template.Must(template.New("login.tmpl.html").Funcs(utils.TemplateFuncMap).ParseFiles("./templates/login.tmpl.html", "./templates/common.tmpl.html"))
+	registerTemplate := template.Must(template.New("register.tmpl.html").Funcs(utils.TemplateFuncMap).ParseFiles("./templates/register.tmpl.html", "./templates/common.tmpl.html"))
+	playgroundsTemplate := template.Must(template.New("playgrounds.tmpl.html").Funcs(utils.TemplateFuncMap).ParseFiles("./templates/playgrounds.tmpl.html", "./templates/playground.tmpl.html", "./templates/reviews.tmpl.html", "./templates/common.tmpl.html"))
+	usersTemplate := template.Must(template.New("users.tmpl.html").Funcs(utils.TemplateFuncMap).ParseFiles("./templates/users.tmpl.html", "./templates/common.tmpl.html"))
+	playgroundGalleryTemplate := template.Must(template.New("playground_gallery.tmpl.html").Funcs(utils.TemplateFuncMap).ParseFiles("./templates/playground.tmpl.html", "./templates/common.tmpl.html"))
 
 	r := mux.NewRouter()
-	r.Use(utils.LoggingMiddleware)
+	r.Use(utils.ComposeMiddlewares(utils.LoggingMiddleware, utils.ParseJSONMiddleware))
 
 	r.Handle("/", http.RedirectHandler("/map", http.StatusPermanentRedirect))
-	r.HandleFunc("/map", routes.RenderTemplate(mapTemplate)).Methods("GET")
+	r.Handle("/map", utils.GetUserMiddleware(w.Dao, routes.MapDataMiddleware(routes.RenderTemplate(mapTemplate)))).Methods("GET")
 	r.Handle("/playgrounds", utils.GetUserMiddleware(w.Dao, routes.PlaygroundsDataMiddleware(w.Dao, routes.RenderTemplate(playgroundsTemplate)))).Methods("GET")
-	r.Handle("/sign-in", routes.SignInDataMiddleware(routes.RenderTemplate(loginTemplate))).Methods("GET")
-	r.Handle("/sign-up", routes.SignUpDataMiddleware(routes.RenderTemplate(registerTemplate))).Methods("GET")
+	r.Handle("/playground/{playgroundId}/gallery", utils.GetUserMiddleware(w.Dao, routes.PlaygroundGalleryDataMiddleware(w.Dao, routes.RenderTemplate(playgroundGalleryTemplate)))).Methods("GET")
+	r.Handle("/users", utils.AccessRightsMiddleware(w.Dao, true, false, routes.UsersDataMiddleware(w.Dao, routes.RenderTemplate(usersTemplate)))).Methods("GET")
+	r.Handle("/sign-in", utils.GetUserMiddleware(w.Dao, routes.SignInDataMiddleware(routes.RenderTemplate(loginTemplate)))).Methods("GET")
+	r.Handle("/sign-up", utils.GetUserMiddleware(w.Dao, routes.SignUpDataMiddleware(routes.RenderTemplate(registerTemplate)))).Methods("GET")
 	r.Handle("/api/login", w.WebappWrapper(routes.Login)).Methods("POST")
 	r.Handle("/api/register", w.WebappWrapper(routes.Register)).Methods("POST")
 	r.Handle("/api/logout", w.WebappWrapper(routes.Logout)).Methods("POST")
@@ -98,7 +84,7 @@ func main() {
 		log.Fatalf("Error while initializing database: %v", err)
 	}
 
-	err = db.AutoMigrate(&entities.User{}, &entities.Playground{}, &entities.PlaygroundPhoto{}, &entities.PlaygroundReview{})
+	err = db.AutoMigrate(&entities.User{}, &entities.Playground{}, &entities.PlaygroundPhoto{}, &entities.PlaygroundReview{}, &entities.PhotoVote{}, &entities.ReviewVote{})
 	if err != nil {
 		log.Fatalf("Auto-Migration error: %v", err)
 	}

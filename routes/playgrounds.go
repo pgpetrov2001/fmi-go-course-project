@@ -20,6 +20,10 @@ func PlaygroundsDataMiddleware(d app.DAO, next http.Handler) http.Handler {
 			tmp := rawUser.(entities.User)
 			user = &tmp
 		}
+		if err := d.UserLoadAssociations(user); err != nil {
+			http.Error(w, fmt.Sprintf("Something went wrong: %v", err), http.StatusInternalServerError)
+			return
+		}
 		playgrounds, err := d.GetPlaygrounds()
 		if err != nil {
 			http.Error(w, "Could not fetch playgrounds for some reason", http.StatusInternalServerError)
@@ -28,13 +32,30 @@ func PlaygroundsDataMiddleware(d app.DAO, next http.Handler) http.Handler {
 		for i, playground := range playgrounds {
 			playgrounds[i].SelectedPhotos = make([]entities.PlaygroundPhoto, 0)
 			for _, photo := range playground.Photos {
-				if (user != nil && user.Administrator) || (photo.Approved != nil && *photo.Approved && photo.Selected) {
+				if photo.Approved != nil && *photo.Approved && photo.Selected {
 					playgrounds[i].SelectedPhotos = append(playgrounds[i].SelectedPhotos, photo)
 				}
 			}
 		}
+		playgroundUserReviewMap := make(map[uint]entities.PlaygroundReview)
+		for _, review := range user.Reviews {
+			playgroundUserReviewMap[review.PlaygroundID] = review
+		}
+		reviewUserVoteMap := make(map[uint]entities.ReviewVote)
+		for _, vote := range user.ReviewVotes {
+			reviewUserVoteMap[vote.Review.ID] = vote
+		}
+		photoUserVoteMap := make(map[uint]entities.PhotoVote)
+		for _, vote := range user.PhotoVotes {
+			photoUserVoteMap[vote.Photo.ID] = vote
+		}
 		templateData := map[string]interface{}{
-			"playgrounds": playgrounds,
+			"playgrounds":             playgrounds,
+			"user":                    user,
+			"page":                    "playgrounds",
+			"playgroundUserReviewMap": playgroundUserReviewMap,
+			"reviewUserVoteMap":       reviewUserVoteMap,
+			"photoUserVoteMap":        photoUserVoteMap,
 		}
 		req := r.WithContext(context.WithValue(r.Context(), "data", templateData))
 		next.ServeHTTP(w, req)
@@ -149,10 +170,15 @@ func PostPlayground(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 func ReviewPlayground(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value("user").(entities.User)
 	playground, _ := r.Context().Value("playground").(entities.Playground)
-	starsVal := r.Form.Get("stars")
-	stars, err := strconv.Atoi(starsVal)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid value for stars %d", stars), http.StatusBadRequest)
+	body := r.Context().Value("body").(map[string]interface{})
+	stars, ok := body["stars"].(float64)
+	if !ok {
+		http.Error(w, fmt.Sprintf("Invalid value for stars %v\n", body["stars"]), http.StatusBadRequest)
+		return
+	}
+	content, ok := body["content"].(string)
+	if !ok {
+		http.Error(w, fmt.Sprintf("Invalid value for content %v\n", body["content"]), http.StatusBadRequest)
 		return
 	}
 	review := entities.PlaygroundReview{
@@ -160,14 +186,17 @@ func ReviewPlayground(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 		Playground:   playground,
 		UserID:       user.ID,
 		User:         user,
-		Stars:        stars,
-		Content:      r.Form.Get("content"),
+		Stars:        int(stars),
+		Content:      content,
 	}
-	err = a.Dao.ReviewPlayground(&review)
+	err := a.Dao.ReviewPlayground(&review)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	reviewData, _ := json.Marshal(review)
+	w.WriteHeader(200)
+	w.Write(reviewData)
 }
 
 func PlaygroundGallery(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
@@ -189,7 +218,12 @@ func PlaygroundGallery(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 func VoteReview(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value("user").(entities.User)
 	review, _ := r.Context().Value("review").(entities.PlaygroundReview)
-	up := r.Form.Get("up") == "true"
+	body := r.Context().Value("body").(map[string]interface{})
+	up, ok := body["up"].(bool)
+	if !ok {
+		http.Error(w, fmt.Sprintf("Invalid value for up %v\n", body["up"]), http.StatusBadRequest)
+		return
+	}
 	vote := entities.ReviewVote{
 		Up:                 up,
 		Review:             review,
@@ -255,7 +289,7 @@ func UploadPlaygroundPhotos(a *app.WebApp, w http.ResponseWriter, r *http.Reques
 		}
 
 		approved := new(bool)
-		*approved = false
+		*approved = user.Administrator
 		photo := entities.PlaygroundPhoto{
 			Playground:   playground,
 			PlaygroundID: playground.ID,
@@ -275,7 +309,7 @@ func UploadPlaygroundPhotos(a *app.WebApp, w http.ResponseWriter, r *http.Reques
 
 	photosData, err := json.Marshal(photos)
 	if err != nil {
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Something went wrong: %v", err), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(200)

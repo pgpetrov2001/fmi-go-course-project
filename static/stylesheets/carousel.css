@@ -6,7 +6,7 @@
 */
 .carousel {
     height: 60vh;
-    width: 40vw;
+    width: 50vw;
     overflow: hidden;
     text-align: center;
     position: relative;
@@ -109,9 +109,7 @@
 /**
   * Theming
 */
-* {
-    box-sizing: border-box;
-}
+
 .carousel-container {
     display: inline-block;
 }

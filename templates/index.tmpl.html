@@ -9,57 +9,10 @@
     <script src="static/lib/leaflet.js"></script>
 </head>
 <body>
-    <header>
-        <hgroup>
-            <h1>Children Playground Navigation System</h1>
-        </hgroup>
-    </header>
-    <nav>
-        <ul>
-            <li><a class="active" href="/map">Map</a></li>
-            <li><a href="/playgrounds">Playgrounds</a></li>
-            <li><a href="/sign-in">Sign in</a></li>
-            <li><a href="/sign-up">Register</a></li>
-            <li><a href="/profile">Profile</a></li>
-            <li><form action="/api/logout" method="post"><button type="submit" style=""><a>Sign out</a></button></form></li>
-        </ul>
-    </nav>
+    {{template "header" .}}
 	<main>
 		<div id="map"></div>
 	</main>
-    <!-- <section> -->
-    <!--     <article> -->
-    <!--         <header> -->
-    <!--             <h1>Article #1</h1> -->
-    <!--         </header> -->
-    <!--         <section> -->
-    <!--             This is the first article. -->
-    <!--         </section> -->
-    <!--     </article> -->
-    <!--     <article> -->
-    <!--         <header> -->
-    <!--             <h1>Article #2</h1> -->
-    <!--         </header> -->
-    <!--         <section> -->
-    <!--             This is the second article. -->
-    <!--         </section> -->
-    <!--     </article> -->
-    <!-- </section> -->
-    <!-- <aside> -->
-    <!--     <section> -->
-    <!--         <h1>Links</h1> -->
-    <!--         <ul> -->
-    <!--             <li><a href="#">Link 1</a></li> -->
-    <!--             <li><a href="#">Link 2</a></li> -->
-    <!--         </ul> -->
-    <!--     </section> -->
-    <!--     <figure> -->
-    <!--         <img width="85" height="85" --> 
-    <!--             src="http://domain.tld/path/to/image.jpg" --> 
-    <!--             alt="foobar" /> -->
-    <!--         <figcaption>Foobar</figcaption> -->
-    <!--     </figure> -->
-    <!-- </aside> -->
     <footer><a href="/about">About</a></footer>
     <script>
         async function addWalkingRoutes() {

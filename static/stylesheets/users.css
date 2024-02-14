@@ -1,0 +1,6 @@
+table, th, td {
+    font-size: 22px;
+    text-align: center;
+    border-collapse: collapse;
+    border: 1px solid;
+}

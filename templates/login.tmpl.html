@@ -7,21 +7,7 @@
     <link href="static/stylesheets/login.css" rel="stylesheet" />
 </head>
 <body>
-<header>
-    <hgroup>
-        <h1>Children Playground Navigation System</h1>
-    </hgroup>
-</header>
-<nav>
-    <ul>
-        <li><a href="/map">Map</a></li>
-        <li><a href="/playgrounds">Playgrounds</a></li>
-        <li><a class="active" href="/sign-in">Sign in</a></li>
-        <li><a href="/sign-up">Register</a></li>
-        <li><a href="/profile">Profile</a></li>
-        <li><form action="/api/logout" method="post"><button type="submit" style=""><a>Sign out</a></button></form></li>
-    </ul>
-</nav>
+{{template "header" .}}
 <main>
     <div id="container">
         <h2>Sign In</h2>

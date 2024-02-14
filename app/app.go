@@ -13,6 +13,7 @@ type DAO interface {
 	GetUser(userId uint) (entities.User, error)
 	UpdateUser(user *entities.User) error
 	DeleteUser(user *entities.User) error
+	UserLoadAssociations(user *entities.User) error
 	CreatePlayground(playground *entities.Playground) error
 	GetPlayground(playgroundId uint) (entities.Playground, error)
 	GetPlaygrounds() ([]entities.Playground, error)

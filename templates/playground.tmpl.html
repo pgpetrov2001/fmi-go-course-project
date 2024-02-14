@@ -1,10 +1,18 @@
 {{define "playground"}}
-<div class="playground" data-id="{{.ID}}">
-    <h3>{{.SiteNumber}} at {{.Location}}</h3>
-    {{template "carousel" .SelectedPhotos}}
-    <br/>
-    <input type="file" class="upload-photos" data-id="{{.ID}}" multiple>
-    <button class="upload-photos" data-id="{{.ID}}">Upload</button>
+<div class="playground" data-id="{{.Playground.ID}}">
+    <div class="playground-header">
+        <h2>{{.Playground.SiteNumber}} at {{.Playground.Location}}</h2>
+        {{template "star_rating" .Playground.AverageRating}}
+        <p>{{len .Playground.Reviews}} reviews</p>
+    </div>
+    <div class="playground-main">
+        {{template "carousel" .Playground}}
+        {{template "reviews" .}}
+    </div>
+    <div class="playground-footer">
+        <input type="file" class="upload-photos" data-id="{{.Playground.ID}}" multiple>
+        <button class="upload-photos" data-id="{{.Playground.ID}}">Upload</button>
+    </div>
 </div>
 
 {{end}}

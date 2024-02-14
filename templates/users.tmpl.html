@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>CPNS</title>
+    <link rel="stylesheet" href="static/lib/fontawesome/css/all.min.css">
+    <link href="static/stylesheets/common.css" rel="stylesheet" />
+    <link href="static/stylesheets/users.css" rel="stylesheet" />
+</head>
+<body>
+{{template "header" .}}
+<main>
+    <table>
+        <thead>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Administrator</th>
+        <th>Banned</th>
+        <th>#Photos</th>
+        <th>#Photos for approval</th>
+        <th>#Votes</th>
+        <th>Created At</th>
+        <th>Updated At</th>
+        </thead>
+        <tbody>
+        {{range .users}}
+        <tr class="user" data-id="{{.ID}}">
+            <td>
+                {{.Username}}
+            </td>
+            <td>
+                {{.Email}}
+            </td>
+            <td>
+                {{if .Administrator}}Yes{{else}}No{{end}}
+            </td>
+            <td>
+                {{if .Banned}}Yes{{else}}No{{end}}
+            </td>
+            <td>
+                {{len .Photos}}
+            </td>
+            <td>
+                {{$forApproval := 0}}
+                {{range .Photos}}
+                    {{if not .Approved}}
+                        {{$forApproval = add $forApproval 1}}
+                    {{end}}
+                {{end}}
+                {{$forApproval}}
+            </td>
+            <td>
+                {{$a := len .ReviewVotes}}
+                {{$b := len .PhotoVotes}}
+                {{add $a $b}}
+            </td>
+            <td>
+                {{.CreatedAt}}
+            </td>
+            <td>
+                {{.UpdatedAt}}
+            </td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+</main>
+<footer><a href="/about">About</a></footer>
+</body>
+</html>

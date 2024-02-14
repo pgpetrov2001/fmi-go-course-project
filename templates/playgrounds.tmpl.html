@@ -3,30 +3,23 @@
 <head>
     <meta charset="utf-8" />
     <title>CPNS</title>
+    <link rel="stylesheet" href="static/lib/fontawesome/css/all.min.css">
     <link href="static/stylesheets/common.css" rel="stylesheet" />
     <link href="static/stylesheets/playgrounds.css" rel="stylesheet" />
     <link href="static/stylesheets/carousel.css" rel="stylesheet" />
+    <link href="static/stylesheets/rating.css" rel="stylesheet" />
+    <link href="static/stylesheets/voting.css" rel="stylesheet" />
+    <link href="static/stylesheets/reviews.css" rel="stylesheet" />
 </head>
 <body>
-<header>
-    <hgroup>
-        <h1>Children Playground Navigation System</h1>
-    </hgroup>
-</header>
-<nav>
-    <ul>
-        <li><a href="/map">Map</a></li>
-        <li><a class="active" href="/playgrounds">Playgrounds</a></li>
-        <li><a href="/sign-in">Sign in</a></li>
-        <li><a href="/sign-up">Register</a></li>
-        <li><a href="/profile">Profile</a></li>
-        <li><form action="/api/logout" method="post"><button type="submit" style=""><a>Sign out</a></button></form></li>
-    </ul>
-</nav>
+{{template "header" .}}
 <main>
     <button>Add new Playground</button>
+    {{ $map := .playgroundUserReviewMap }}
+    {{ $innerMap := .reviewUserVoteMap }}
     {{range .playgrounds}}
-        {{template "playground" .}}
+        {{$userReview := index $map .ID}}
+        {{template "playground" dict "Playground" . "UserReview" $userReview "reviewUserVoteMap" $innerMap }}
     {{end}}
 </main>
 <footer><a href="/about">About</a></footer>

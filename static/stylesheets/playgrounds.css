@@ -1,0 +1,10 @@
+.playground-main {
+    display: flex;
+    justify-content: stretch;
+    width: 100vw;
+}
+.playground-header {
+    .Stars {
+        font-size: 50px;
+    }
+}

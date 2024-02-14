@@ -1,19 +1,20 @@
 {{define "carousel"}}
 
-{{ $selectedPhotos := . }}
-{{ $numPhotos := len . }}
+{{ $selectedPhotos := .SelectedPhotos }}
+{{ $numPhotos := len .SelectedPhotos }}
 
 {{$initialId := 0}}
 {{if gt $numPhotos 0}}
-  {{$initialPhoto := index . 0}}
+  {{$initialPhoto := index .SelectedPhotos 0}}
   {{$initialId = $initialPhoto.ID}}
 {{end}}
+{{$playgroundId := .ID}}
 
 {{if gt $numPhotos 0}}
 <div class="carousel-container">
   <ul class="carousel my-carousel carousel--thumb">
-    {{range .}}
-      {{ $onclick := .ID | printf "document.querySelectorAll('.selected').forEach((el) => el.classList.remove('selected')); document.querySelectorAll('[data-photo-id=&quot;%d&quot;]').forEach((el) => el.classList.add('selected'))" }}
+    {{range .SelectedPhotos}}
+      {{ $onclick := printf "document.querySelectorAll('.playground[data-id=&quot;%d&quot;] .carousel-container .selected').forEach((el) => el.classList.remove('selected')); document.querySelectorAll('[data-photo-id=&quot;%d&quot;]').forEach((el) => el.classList.add('selected'))" $playgroundId .ID}}
       <input
               class="carousel__activator"
               type="radio"
@@ -23,7 +24,7 @@
               {{if eq .ID $initialId}}checked="checked"{{end}}/>
     {{end}}
 
-    {{range $i, $photo := .}}
+    {{range $i, $photo := .SelectedPhotos}}
       {{ $prevIndex := sub $i 1 }}
       {{ $prevIndex = add $prevIndex $numPhotos }}
       {{ $prevIndex = mod $prevIndex $numPhotos }}
@@ -36,7 +37,7 @@
         <label class="carousel__control carousel__control--forward" for="photo-{{$nextPhoto.ID}}"></label>
       </div>
     {{end}}
-    {{range $i, $photo := .}}
+    {{range $i, $photo := .SelectedPhotos}}
       {{ $translateX := mul $i 100 }}
       <li
               class="carousel__slide photo {{if eq $photo.ID $initialId}}selected{{end}}"
@@ -45,7 +46,7 @@
       </li>
     {{end}}
     <div class="carousel__indicators">
-    {{range .}}
+    {{range .SelectedPhotos}}
         <label
                 class="carousel__indicator {{if eq .ID $initialId}}selected{{end}}"
                 data-photo-id="{{.ID}}"
@@ -59,4 +60,44 @@
 {{else}}
 <p>No photos available at the moment.</p>
 {{end}}
+{{end}}
+
+{{define "star_rating"}}
+<div class="Stars" style="--rating: {{ printf "%.2f" .}};" aria-label="Rating of this product is {{printf "%.2f" .}} out of 5."></div>
+{{end}}
+
+{{define "voting"}}
+{{$val := 0}}
+{{if gt .Vote.UserID 0}}
+{{if .Vote.Up}}{{$val = 1}}{{else}}{{$val = -1}}{{end}}
+{{end}}
+<div class="voting review-voting" data-id="{{.Review.ID}}">
+  <div class="vote-button like grow">
+    <i class="fa fa-thumbs-up fa-3x like {{if eq $val 1}}selected{{end}}" aria-hidden="true"></i>
+  </div>
+  <div class="vote-button dislike grow">
+    <i class="fa fa-thumbs-down fa-3x like {{if eq $val -1}}selected{{end}}" aria-hidden="true"></i>
+  </div>
+</div>
+{{end}}
+
+{{define "header"}}
+<header>
+  <hgroup>
+    <h1>Children Playground Navigation System</h1>
+  </hgroup>
+</header>
+<nav>
+  <ul>
+    <li><a {{if eq .page "map"}}class="active"{{end}} href="/map">Map</a></li>
+    <li><a {{if eq .page "playgrounds"}}class="active"{{end}} href="/playgrounds">Playgrounds</a></li>
+    {{if and .user .user.Administrator}}
+    <li><a {{if eq .page "users"}}class="active"{{end}} href="/users">Manage Users</a></li>
+    {{end}}
+    <li><a {{if eq .page "sign-in"}}class="active"{{end}} href="/sign-in">Sign in</a></li>
+    <li><a {{if eq .page "sign-up"}}class="active"{{end}} href="/sign-up">Register</a></li>
+    <li><a {{if eq .page "profile"}}class="active"{{end}} href="/profile">Profile</a></li>
+    <li><form action="/api/logout" method="post"><button type="submit" style=""><a>Sign out</a></button></form></li>
+  </ul>
+</nav>
 {{end}}

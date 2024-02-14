@@ -1,0 +1,29 @@
+.voting {
+    display: inline-block;
+    font-size: 5px;
+
+    .like,
+    .dislike {
+        display: inline-block;
+        cursor: pointer;
+        margin: 2px;
+    }
+
+    .dislike:hover,
+    .like:hover {
+        transition: all .2s ease-in-out;
+        transform: scale(1.1);
+        color: #2EBDD1;
+    }
+
+    /*.like:hover {*/
+    /*    color: #4CAF50;*/
+    /*}*/
+    /*.dislike:hover {*/
+    /*    color: crimson;*/
+    /*}*/
+
+    .selected, .active {
+        color: #2EBDD1;
+    }
+}

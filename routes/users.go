@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"course-project/app"
+	"course-project/entities"
 	"course-project/utils"
 	"encoding/json"
 	"fmt"
@@ -190,11 +191,34 @@ func Register(a *app.WebApp, w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/sign-in", http.StatusSeeOther)
 }
 
+func UsersDataMiddleware(d app.DAO, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := r.Context().Value("user").(entities.User)
+		users, err := d.GetUsers()
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Could not get users: %v"), http.StatusInternalServerError)
+			return
+		}
+		data := map[string]interface{}{
+			"users": users,
+			"page":  "users",
+			"user":  user,
+		}
+		req := r.WithContext(context.WithValue(r.Context(), "data", data))
+		next.ServeHTTP(w, req)
+	})
+}
+
 func SignInDataMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		errVal := r.URL.Query().Get("error")
+		user, ok := r.Context().Value("user").(entities.User)
 		data := map[string]interface{}{
 			"error": errVal,
+			"page":  "sign-in",
+		}
+		if ok {
+			data["user"] = user
 		}
 		req := r.WithContext(context.WithValue(r.Context(), "data", data))
 		next.ServeHTTP(w, req)
@@ -204,8 +228,13 @@ func SignInDataMiddleware(next http.Handler) http.Handler {
 func SignUpDataMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		errVal := r.URL.Query().Get("error")
+		user, ok := r.Context().Value("user").(entities.User)
 		data := map[string]interface{}{
 			"error": errVal,
+			"page":  "sign-up",
+		}
+		if ok {
+			data["user"] = user
 		}
 		req := r.WithContext(context.WithValue(r.Context(), "data", data))
 		next.ServeHTTP(w, req)

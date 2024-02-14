@@ -1,0 +1,98 @@
+.reviews-container {
+    width: 40vw;
+    display: block;
+    width: 100%;
+    max-width: 40vw;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+
+    .do-review {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .review-input {
+        flex-grow: 1;
+        height: 50px;
+        margin-right: 10px;
+        padding: 5px;
+    }
+
+    .submit-review {
+        padding: 5px 10px;
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    .do-rating {
+        unicode-bidi: bidi-override;
+        direction: rtl;
+    }
+    .do-rating > span {
+        display: inline-block;
+        position: relative;
+        width: 1.1em;
+        font-size: 2em;
+    }
+    .do-rating.unselected > span:hover:before,
+    .do-rating.unselected > span:hover ~ span:before,
+    .do-rating > span.active:before {
+        content: "\2605";
+        position: absolute;
+    }
+
+    .all-reviews {
+        padding: 10px;
+        margin-bottom: 20px;
+        overflow-y: auto;
+    }
+
+    .review {
+        box-shadow: 2px 2px 30px rgba(0,0,0,0.1);
+        background-color: #ffffff;
+        padding: 20px;
+        margin: 15px;
+        cursor: pointer;
+    }
+
+    .profile{
+        display: flex;
+        align-items: center;
+    }
+    .name-user{
+        display: flex;
+        flex-direction: column;
+    }
+    .name-user strong{
+        color: #3d3d3d;
+        font-size: 1.1rem;
+        letter-spacing: 0.5px;
+    }
+
+    .review-rating{
+        color: #f9d71c;
+    }
+    .box-top{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .box-bottom {
+        display: flex;
+        justify-content: space-between;
+    }
+    .review-content p{
+        font-size: 0.9rem;
+        color: #4b4b4b;
+    }
+    .review:hover{
+        transform: scale(1.05);
+        transition: all ease 0.3s;
+    }
+
+
+}

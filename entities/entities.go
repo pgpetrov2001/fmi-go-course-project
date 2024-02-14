@@ -30,6 +30,7 @@ type Playground struct {
 	Reviews        []PlaygroundReview
 	Photos         []PlaygroundPhoto
 	SelectedPhotos []PlaygroundPhoto
+	AverageRating  float32 `gorm:"-"`
 }
 
 //TODO: add relation between playgrounds and their selected photos to be shown

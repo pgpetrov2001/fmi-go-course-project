@@ -72,7 +72,12 @@ func (cpns *CPNS) Authenticate(email string, pass string) (*entities.User, error
 
 func (cpns *CPNS) GetUsers() ([]entities.User, error) {
 	var users []entities.User
-	err := cpns.Db.Find(&users).Error
+	err := cpns.Db.Model(&entities.User{}).
+		Preload("Reviews").
+		Preload("Photos").
+		Preload("ReviewVotes").
+		Preload("PhotoVotes").
+		Find(&users).Error
 	return users, err
 }
 
@@ -80,6 +85,18 @@ func (cpns *CPNS) GetUser(userId uint) (entities.User, error) {
 	var user entities.User
 	err := cpns.Db.First(&user, userId).Error
 	return user, err
+}
+
+func (cpns *CPNS) UserLoadAssociations(user *entities.User) error {
+	err := cpns.Db.Model(user).
+		Preload("Reviews").
+		Preload("Photos").
+		Preload("ReviewVotes").
+		Preload("PhotoVotes").
+		Preload("ReviewVotes.Review").
+		Preload("PhotoVotes.Photo").
+		Find(user).Error
+	return err
 }
 
 func (cpns *CPNS) GetPlayground(playgroundId uint) (entities.Playground, error) {
@@ -90,7 +107,20 @@ func (cpns *CPNS) GetPlayground(playgroundId uint) (entities.Playground, error) 
 
 func (cpns *CPNS) GetPlaygrounds() ([]entities.Playground, error) {
 	var playgrounds []entities.Playground
-	err := cpns.Db.Preload("Photos").Preload("Reviews").Find(&playgrounds).Error
+	err := cpns.Db.
+		Preload("Photos").
+		Preload("Reviews").
+		Preload("Reviews.User").
+		Find(&playgrounds).Error
+	for i, playground := range playgrounds {
+		playgrounds[i].AverageRating = 0
+		for _, review := range playground.Reviews {
+			playgrounds[i].AverageRating += float32(review.Stars)
+		}
+		if len(playground.Reviews) > 0 {
+			playgrounds[i].AverageRating /= float32(len(playground.Reviews))
+		}
+	}
 	return playgrounds, err
 }
 

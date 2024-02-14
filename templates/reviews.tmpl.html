@@ -1,0 +1,43 @@
+{{define "reviews"}}
+<div class="reviews-container">
+    <div class="do-review">
+        {{$rating := .UserReview.Stars}}
+        {{$hasUserReviewed := gt .UserReview.ID 0}}
+        {{if $hasUserReviewed}}
+        <span>Your rating:</span>
+        {{else}}
+        <span>Rate:</span>
+        {{end}}
+        <div class="do-rating {{if not $hasUserReviewed}}unselected{{end}}" data-id="{{.Playground.ID}}">
+            {{range numRange 5 1 -1}}
+                {{$starIdx := sub 6 .}}
+                {{$activeCond := le . $rating}}
+                <span class="clickable-star {{if and $activeCond $hasUserReviewed}}active{{end}}" data-index="{{.}}">☆</span>
+            {{end}}
+        </div>
+    </div>
+
+    <div class="all-reviews">
+        {{$map := .reviewUserVoteMap}}
+        {{range .Playground.Reviews}}
+            <div class="review">
+                <div class="box-top">
+                    <div class="profile">
+                        <div class="name-user">
+                            <strong>{{.User.Username}}</strong>
+                        </div>
+                    </div>
+                    <div class="review-rating">
+                        {{template "star_rating" asfloat32 .Stars}}
+                    </div>
+                </div>
+                <div class="box-bottom">
+                    <div class="review-content"><p>{{.Content}}</p></div>
+                    {{$vote := index $map .ID}}
+                    {{template "voting" dict "Vote" $vote "Review" .}}
+                </div>
+            </div>
+        {{end}}
+    </div>
+</div>
+{{end}}
